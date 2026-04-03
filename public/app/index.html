@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BAFIR">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/bafir_favicon.png">
+<link rel="icon" href="/bafir_favicon.png">
+<title>BAFIR TRADING</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0c0e13;--bg2:#10131a;--card:#13171f;--border:#1e2533;
+  --text:#dce8f5;--dim:#4a607a;--dim2:#7a90a8;
+  --blue:#1a9fd4;--green:#00d97e;--red:#ff4d6a;--gold:#c9a84c;
+  --safe-top:env(safe-area-inset-top,44px);
+  --safe-bot:env(safe-area-inset-bottom,34px);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
+
+/* SPLASH */
+#splash{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .5s}
+#splash.hide{opacity:0;pointer-events:none}
+.splash-logo{width:120px;height:120px;object-fit:contain;margin-bottom:20px;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.splash-loading{margin-top:40px;width:60px;height:2px;background:#1a2030;border-radius:1px;overflow:hidden}
+.splash-bar{height:100%;background:var(--blue);border-radius:1px;animation:load 1.5s ease forwards}
+@keyframes load{from{width:0}to{width:100%}}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:100}
+.login-card{width:100%;max-width:360px;background:var(--card);border:1px solid var(--border);border-radius:24px;padding:32px 24px}
+.login-logo-wrap{text-align:center;margin-bottom:28px}
+.login-logo{height:80px;object-fit:contain}
+.inp{width:100%;padding:13px 15px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:var(--bg2);color:var(--text);font-family:'DM Sans',sans-serif;outline:none;margin-bottom:10px;transition:border-color .2s}
+.inp:focus{border-color:var(--blue)}
+.btn-main{width:100%;padding:14px;background:var(--blue);border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;color:white;letter-spacing:.04em;margin-top:4px}
+.btn-faceid{width:100%;padding:12px;background:transparent;border:1.5px solid var(--border);border-radius:12px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--dim2);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.login-err{font-size:12px;color:var(--red);text-align:center;margin-top:10px;display:none;padding:8px;background:#ff4d6a12;border-radius:8px}
+#twofa-form{display:none}
+
+/* APP */
+#app{display:none;flex-direction:column;height:100%;padding-top:var(--safe-top)}
+.topbar{padding:10px 18px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.topbar-logo{height:28px;object-fit:contain}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.status-pill{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600;background:var(--bg2);border:1px solid var(--border)}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot-on{background:var(--green);box-shadow:0 0 5px var(--green)}
+.dot-off{background:var(--red)}
+.btn-logout{background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:4px}
+
+/* TABS */
+.tab-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px 10px}
+.tab-pane{display:none;padding-top:14px}.tab-pane.active{display:block;animation:fu .2s ease}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* BOTTOM NAV */
+.bottom-nav{display:flex;background:var(--bg2);border-top:1px solid var(--border);padding-bottom:var(--safe-bot)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;border:none;background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif}
+.nav-icon{font-size:22px;line-height:1}
+.nav-label{font-size:9px;letter-spacing:.04em;color:var(--dim);text-transform:uppercase;font-weight:500;transition:color .2s}
+.nav-btn.active .nav-label{color:var(--blue)}
+
+/* CARDS */
+.m-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px;margin-bottom:11px}
+.m-ct{font-size:9px;letter-spacing:.1em;color:var(--dim2);text-transform:uppercase;margin-bottom:10px}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#0a0d14,#111520);border:1px solid #1a2535;border-radius:16px;padding:20px 18px;margin-bottom:11px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:var(--blue);opacity:.06}
+.hero-lbl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.hero-val{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;line-height:1}
+.hero-alt{font-size:12px;color:var(--dim2);margin-top:5px}
+.hero-badge{display:inline-flex;align-items:center;gap:4px;margin-top:10px;padding:6px 13px;border-radius:20px;font-size:13px;font-weight:700}
+.pos{background:#00d97e18;color:var(--green);border:1px solid #00d97e30}
+.neg{background:#ff4d6a18;color:var(--red);border:1px solid #ff4d6a30}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:11px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 12px}
+.kl{font-size:8px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;margin-bottom:5px}
+.kv{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;line-height:1}
+.ks{font-size:10px;color:var(--dim2);margin-top:3px}
+
+/* PERIOD SELECTOR */
+.period-row{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;margin-bottom:10px;scrollbar-width:none}
+.period-row::-webkit-scrollbar{display:none}
+.pb{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--dim2);font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;transition:all .2s}
+.pb.active{background:var(--blue);color:white;border-color:var(--blue)}
+
+/* CHART */
+.chart-wrap{height:80px;margin:4px 0 10px}
+
+/* TRADES */
+.trade-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.trade-item:last-child{border-bottom:none}
+.trade-badge{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;letter-spacing:.05em}
+.t-buy{background:#00d97e18;color:var(--green);border:1px solid #00d97e30}
+.t-sell{background:#ff4d6a18;color:var(--red);border:1px solid #ff4d6a30}
+
+/* CLIENTS */
+.cl-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.cl-item:last-child{border-bottom:none}
+.cl-av{width:38px;height:38px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:white;flex-shrink:0}
+.cl-info{flex:1;margin-left:11px}
+.cl-name{font-size:14px;font-weight:600}
+.cl-sub{font-size:11px;color:var(--dim2);margin-top:1px}
+.cl-val{text-align:right}
+.cl-main{font-size:14px;font-weight:700;color:var(--blue)}
+.cl-pnl{font-size:11px;margin-top:2px;font-weight:600}
+
+/* BOT CARDS */
+.regime-pill{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600}
+.bull{background:#00d97e18;color:var(--green);border:1px solid #00d97e30}
+.bear{background:#ff4d6a18;color:var(--red);border:1px solid #ff4d6a30}
+.lateral{background:#c9a84c18;color:var(--gold);border:1px solid #c9a84c30}
+.unknown{background:var(--border);color:var(--dim2)}
+
+.stat3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.stat-box{background:var(--bg2);border-radius:9px;padding:10px 8px;text-align:center}
+.stat-lbl{font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.stat-val{font-size:15px;font-weight:700}
+
+.green{color:var(--green)}.red{color:var(--red)}.blue{color:var(--blue)}.gold{color:var(--gold)}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <img class="splash-logo" src="/bafir_logo.png" alt="BAFIR">
+  <div class="splash-loading"><div class="splash-bar"></div></div>
+</div>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo-wrap">
+      <img class="login-logo" src="/bafir_logo_nombre.png" alt="BAFIR TRADING">
+    </div>
+    <div id="login-form">
+      <input class="inp" type="password" id="l-pw" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn-main" onclick="doLogin()">Acceder →</button>
+      <button class="btn-faceid" id="btn-faceid" style="display:none" onclick="doFaceID()">
+        <span style="font-size:18px">🔐</span> Face ID
+      </button>
+    </div>
+    <div id="twofa-form">
+      <div style="text-align:center;font-size:13px;color:var(--dim2);margin-bottom:16px">🔐 Google Authenticator</div>
+      <input class="inp" type="tel" id="l-code" placeholder="000000" maxlength="6" inputmode="numeric" style="font-size:24px;letter-spacing:10px;text-align:center" onkeydown="if(event.key==='Enter')do2FA()">
+      <button class="btn-main" onclick="do2FA()">Verificar →</button>
+    </div>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <img class="topbar-logo" src="/bafir_logo_nombre.png" alt="BAFIR">
+    <div class="topbar-right">
+      <div class="status-pill"><div class="dot" id="bot-dot"></div><span id="bot-label">—</span></div>
+      <button class="btn-logout" onclick="doLogout()">⏻</button>
+    </div>
+  </div>
+
+  <div class="tab-content">
+    <div class="tab-pane active" id="tab-resumen">
+      <div id="resumen-content"><div style="text-align:center;padding:40px;color:var(--dim);font-size:13px">Cargando…</div></div>
+    </div>
+    <div class="tab-pane" id="tab-clientes">
+      <div id="clientes-content"><div style="text-align:center;padding:40px;color:var(--dim);font-size:13px">Cargando…</div></div>
+    </div>
+    <div class="tab-pane" id="tab-bot">
+      <div id="bot-content"><div style="text-align:center;padding:40px;color:var(--dim);font-size:13px">Cargando…</div></div>
+    </div>
+    <div class="tab-pane" id="tab-notif">
+      <div class="m-card" style="margin-top:0">
+        <div class="m-ct">NOTIFICACIONES</div>
+        <div id="notif-list"><div style="text-align:center;padding:16px;color:var(--dim);font-size:12px">Sin notificaciones</div></div>
+      </div>
+      <div class="m-card">
+        <div class="m-ct">ALERTAS PUSH</div>
+        <div style="font-size:12px;color:var(--dim2);line-height:1.8">
+          <label style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>Circuit breaker ⚡</span><input type="checkbox" id="n-cb" checked></label>
+          <label style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>Ganancia importante 💰</span><input type="checkbox" id="n-win" checked></label>
+          <label style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>Parámetros adoptados 🧠</span><input type="checkbox" id="n-sync" checked></label>
+          <label style="display:flex;align-items:center;justify-content:space-between;padding:6px 0"><span>Resumen diario 📊</span><input type="checkbox" id="n-daily" checked></label>
+        </div>
+        <button class="btn-main" style="margin-top:14px;font-size:13px;padding:11px" onclick="requestPush()">🔔 Activar notificaciones push</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" onclick="switchTab('resumen',this)"><div class="nav-icon">📊</div><div class="nav-label">Resumen</div></button>
+    <button class="nav-btn" onclick="switchTab('clientes',this)"><div class="nav-icon">👥</div><div class="nav-label">Clientes</div></button>
+    <button class="nav-btn" onclick="switchTab('bot',this)"><div class="nav-icon">🤖</div><div class="nav-label">Bot</div></button>
+    <button class="nav-btn" onclick="switchTab('notif',this)"><div class="nav-icon">🔔</div><div class="nav-label">Alertas</div></button>
+  </nav>
+</div>
+
+<script>
+let token = localStorage.getItem("bafir_token") || "";
+let _tempToken = "";
+let notifLog = JSON.parse(localStorage.getItem("bafir_notifs")||"[]");
+
+// ── SPLASH ────────────────────────────────────────────────────────────────────
+window.addEventListener("load", () => {
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
+  setTimeout(()=>{
+    document.getElementById("splash").classList.add("hide");
+    setTimeout(()=>{
+      document.getElementById("splash").style.display="none";
+      token ? initApp() : showLogin();
+    },500);
+  },1500);
+});
+
+// ── BIOMETRICS ────────────────────────────────────────────────────────────────
+async function checkBio(){try{return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch{return false;}}
+async function showLogin(){
+  document.getElementById("login-screen").style.display="flex";
+  if(await checkBio()&&localStorage.getItem("bafir_bio_enabled")){
+    document.getElementById("btn-faceid").style.display="flex";
+    setTimeout(doFaceID,400);
+  }
+}
+async function doFaceID(){
+  const cid=localStorage.getItem("bafir_cred_id"); if(!cid)return;
+  try{
+    const cred=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{id:b64ToArr(cid),type:"public-key"}],userVerification:"required",timeout:30000}});
+    if(cred){const pw=localStorage.getItem("bafir_bio_pw"); if(pw)await loginPw(atob(pw));}
+  }catch(e){console.log("FaceID:",e.message);}
+}
+async function registerBio(pw){
+  if(!window.PublicKeyCredential||!await checkBio())return;
+  try{
+    const c=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:"BAFIR",id:location.hostname},user:{id:new TextEncoder().encode("admin"),name:"admin",displayName:"Admin"},pubKeyCredParams:[{alg:-7,type:"public-key"}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},timeout:30000}});
+    if(c){localStorage.setItem("bafir_cred_id",arrToB64(new Uint8Array(c.rawId)));localStorage.setItem("bafir_bio_enabled","1");localStorage.setItem("bafir_bio_pw",btoa(pw));}
+  }catch(e){console.log("Bio reg:",e.message);}
+}
+const arrToB64=a=>btoa(String.fromCharCode(...a));
+const b64ToArr=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+async function doLogin(){const pw=document.getElementById("l-pw").value;if(!pw)return showErr("Introduce tu contraseña");await loginPw(pw);}
+async function loginPw(pw){
+  try{
+    const r=await fetch("/api/auth/admin",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw})});
+    const d=await r.json();
+    if(!r.ok)return showErr(d.error||"Contraseña incorrecta");
+    if(d.require2FA){_tempToken=d.tempToken;document.getElementById("login-form").style.display="none";document.getElementById("twofa-form").style.display="block";return;}
+    await onSuccess(d.token,pw);
+  }catch{showErr("Error de conexión");}
+}
+async function do2FA(){
+  const code=document.getElementById("l-code").value.trim();if(!code)return;
+  try{
+    const r=await fetch("/api/auth/admin/2fa",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tempToken:_tempToken,code})});
+    const d=await r.json();
+    if(!r.ok)return showErr(d.error||"Código incorrecto");
+    await onSuccess(d.token,null);
+  }catch{showErr("Error de conexión");}
+}
+async function onSuccess(tok,pw){
+  token=tok; localStorage.setItem("bafir_token",tok);
+  if(pw&&await checkBio()&&!localStorage.getItem("bafir_bio_enabled")){
+    if(confirm("¿Activar Face ID para futuros accesos?"))await registerBio(pw);
+  }
+  document.getElementById("login-screen").style.display="none";
+  initApp();
+}
+function showErr(msg){const el=document.getElementById("login-err");el.textContent=msg;el.style.display="block";setTimeout(()=>el.style.display="none",3000);}
+async function doLogout(){
+  await fetch("/api/auth/logout",{method:"POST",headers:{"Authorization":"Bearer "+token}});
+  localStorage.removeItem("bafir_token"); token="";
+  document.getElementById("app").style.display="none";
+  document.getElementById("login-form").style.display="block";
+  document.getElementById("twofa-form").style.display="none";
+  document.getElementById("l-pw").value="";
+  showLogin();
+}
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(method,url,body){
+  try{
+    const r=await fetch(url,{method,headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:body?JSON.stringify(body):undefined});
+    if(r.status===401){doLogout();return null;}
+    return r.json();
+  }catch{return null;}
+}
+
+// ── FORMAT ────────────────────────────────────────────────────────────────────
+const fU=n=>"$"+new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0);
+const fE=n=>"€"+new Intl.NumberFormat("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0);
+const fP=n=>(n>=0?"+":"")+Number(n||0).toFixed(2)+"%";
+const clr=n=>n>=0?"var(--green)":"var(--red)";
+const fD=ts=>new Date(ts).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+const fDate=ts=>new Date(ts).toLocaleDateString("es-ES",{day:"2-digit",month:"short"});
+
+// ── CHART ─────────────────────────────────────────────────────────────────────
+function buildChart(data, color, period) {
+  if (!data?.length) return `<div style="height:80px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px">Sin datos</div>`;
+  // Filter by period
+  const now = Date.now();
+  const cutoffs = { "1H":3600000,"1D":86400000,"1W":604800000,"1M":2592000000,"YTD":now-new Date(new Date().getFullYear(),0,1).getTime(),"1Y":31536000000,"ALL":Infinity };
+  const cutoff = now - (cutoffs[period]||Infinity);
+  let filtered = data.filter(e=>new Date(e.ts||0).getTime()>=cutoff);
+  if (!filtered.length) filtered = data.slice(-50);
+  const vals = filtered.map(e=>e.value||e);
+  const min=Math.min(...vals),max=Math.max(...vals),range=max-min||1;
+  const W=400,H=80;
+  const pts = vals.map((v,i)=>`${(i/(vals.length-1||1))*W},${H-((v-min)/range)*(H-4)+2}`).join(" ");
+  const trend = vals[vals.length-1]>=vals[0];
+  const lineColor = trend?"var(--green)":"var(--red)";
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:80px">
+    <defs><linearGradient id="cg${color.replace('#','')}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${lineColor}" stop-opacity=".2"/>
+      <stop offset="100%" stop-color="${lineColor}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <polygon points="${pts} ${W},${H} 0,${H}" fill="url(#cg${color.replace('#','')})"/>
+    <polyline points="${pts}" fill="none" stroke="${lineColor}" stroke-width="2.5" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+// ── APP INIT ──────────────────────────────────────────────────────────────────
+let botData = null;
+function initApp(){
+  document.getElementById("app").style.display="flex";
+  setInterval(()=>{
+    const active=document.querySelector(".tab-pane.active")?.id;
+    if(active==="tab-resumen")loadResumen();
+    else if(active==="tab-bot")loadBot();
+  },30000);
+  loadResumen();
+}
+
+function switchTab(tab,btn){
+  document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("tab-"+tab).classList.add("active");
+  btn.classList.add("active");
+  if(tab==="resumen")loadResumen();
+  else if(tab==="clientes")loadClientes();
+  else if(tab==="bot")loadBot();
+  else if(tab==="notif")renderNotifs();
+}
+
+// ── RESUMEN ───────────────────────────────────────────────────────────────────
+let resumenPeriod = "1M";
+async function loadResumen(){
+  const [m,bs]=await Promise.all([api("GET","/api/admin/metrics"),api("GET","/api/bots/state")]);
+  if(!m)return;
+  botData=bs;
+  const liveEq=bs?.liveEquity||[];
+  const paperEq=bs?.paperEquity||[];
+  const live=bs?.live;
+  const botOnline=liveEq.length>0;
+  document.getElementById("bot-dot").className="dot "+(botOnline?"dot-on":"dot-off");
+  document.getElementById("bot-label").textContent=botOnline?"Live online":"Offline";
+
+  const all=m.periods?.find(p=>p.period==="ALL")||{pnlPct:0,pnl:0};
+  const today=m.periods?.find(p=>p.period==="1D")||{pnlPct:0,pnl:0};
+  const month=m.periods?.find(p=>p.period==="1M")||{pnlPct:0,pnl:0};
+
+  const periods=["1H","1D","1W","1M","YTD","1Y","ALL"];
+  document.getElementById("resumen-content").innerHTML=`
+    <div class="hero">
+      <div class="hero-lbl">AUM Total</div>
+      <div class="hero-val blue">${fU(m.aumUSD)}</div>
+      <div class="hero-alt">${fE(m.aumEUR)} · ${m.nClients} cliente${m.nClients!==1?"s":""}</div>
+      <div class="hero-badge ${all.pnlPct>=0?"pos":"neg"}">${all.pnlPct>=0?"▲":"▼"} ${fP(all.pnlPct)} total</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kl">Rendimiento hoy</div>
+        <div class="kv" style="color:${clr(today.pnlPct)}">${fP(today.pnlPct)}</div>
+        <div class="ks" style="color:${clr(today.pnl)}">${today.pnl>=0?"+":""}${fU(today.pnl)}</div>
+      </div>
+      <div class="kpi">
+        <div class="kl">Rendimiento mes</div>
+        <div class="kv" style="color:${clr(month.pnlPct)}">${fP(month.pnlPct)}</div>
+        <div class="ks" style="color:${clr(month.pnl)}">${month.pnl>=0?"+":""}${fU(month.pnl)}</div>
+      </div>
+      <div class="kpi">
+        <div class="kl">Bot equity</div>
+        <div class="kv blue">${fU(m.botEquityUSD)}</div>
+        <div class="ks">${fE(m.botEquityEUR)}</div>
+      </div>
+      <div class="kpi">
+        <div class="kl">Sin asignar</div>
+        <div class="kv">${(m.unallocatedPct||0).toFixed(0)}%</div>
+        <div class="ks">del capital</div>
+      </div>
+    </div>
+
+    <div class="m-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="m-ct" style="margin:0">CURVA LIVE</div>
+        <div style="font-size:10px;color:var(--dim2)">${live?fU(live.totalValue||0):"Sin datos"}</div>
+      </div>
+      <div class="period-row" id="res-periods">
+        ${periods.map(p=>`<button class="pb ${p===resumenPeriod?"active":""}" onclick="setResumenPeriod('${p}',this)">${p}</button>`).join("")}
+      </div>
+      <div class="chart-wrap" id="res-chart">${buildChart(liveEq,"blue",resumenPeriod)}</div>
+    </div>
+
+    <div class="m-card">
+      <div class="m-ct">DISTRIBUCIÓN</div>
+      ${(m.distribution||[]).map((c,i)=>{
+        const cols=["#1a9fd4","#c9a84c","#00d97e","#f7931a","#a855f7"];
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;border-radius:50%;background:${cols[i%cols.length]}"></div><span style="font-size:13px">${c.name}</span></div>
+          <div style="text-align:right"><div style="font-size:13px;font-weight:600">${fU(c.valueUSD)}</div><div style="font-size:10px;color:var(--dim2)">${c.share}%</div></div>
+        </div>`;
+      }).join("")||`<div style="text-align:center;color:var(--dim);font-size:12px;padding:10px">Sin clientes asignados</div>`}
+    </div>
+  `;
+  // Store for chart updates
+  window._liveEq=liveEq; window._paperEq=paperEq;
+}
+
+function setResumenPeriod(p,btn){
+  resumenPeriod=p;
+  document.querySelectorAll("#res-periods .pb").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("res-chart").innerHTML=buildChart(window._liveEq||[],"blue",p);
+}
+
+// ── CLIENTES ──────────────────────────────────────────────────────────────────
+async function loadClientes(){
+  const clients=await api("GET","/api/admin/clients");
+  if(!clients)return;
+  document.getElementById("clientes-content").innerHTML=`
+    <div class="m-card" style="margin-top:0">
+      <div class="m-ct">${clients.filter(c=>c.active).length} CLIENTES ACTIVOS</div>
+      ${clients.filter(c=>c.active).map(c=>`
+        <div class="cl-item">
+          <div class="cl-av">${c.name[0].toUpperCase()}</div>
+          <div class="cl-info">
+            <div class="cl-name">${c.name}</div>
+            <div class="cl-sub">${c.share||0}% del fondo · ${c.currency}</div>
+          </div>
+          <div class="cl-val">
+            <div class="cl-main">${c.currency==="EUR"?fE(c.valueDisplay):fU(c.valueDisplay)}</div>
+            <div class="cl-pnl" style="color:${clr(c.pnlPct||0)}">${fP(c.pnlPct||0)}</div>
+          </div>
+        </div>`).join("")||`<div style="text-align:center;color:var(--dim);font-size:12px;padding:16px">Sin clientes</div>`}
+    </div>`;
+}
+
+// ── BOT ───────────────────────────────────────────────────────────────────────
+let paperPeriod="1D", livePeriod="1D";
+async function loadBot(){
+  const bs=botData||await api("GET","/api/bots/state");
+  if(!bs){document.getElementById("bot-content").innerHTML=`<div style="text-align:center;padding:40px;color:var(--dim);font-size:13px">Sin datos de los bots</div>`;return;}
+  botData=bs;
+  const renderBot=(state,eq,label,period,periodId)=>{
+    if(!state)return`<div class="m-card"><div class="m-ct">${label}</div><div style="text-align:center;padding:16px;color:var(--dim);font-size:12px">Sin conexión</div></div>`;
+    const ret=state.returnPct||0;
+    const wr=state.winRate;
+    const fg=state.fearGreed||50;
+    const fgTxt=fg<25?"😱 Extreme Fear":fg<45?"😟 Fear":fg<55?"😐 Neutral":fg<75?"😊 Greed":"🤑 Greed";
+    const regime=state.marketRegime||"UNKNOWN";
+    const rClass=regime==="BULL"?"bull":regime==="BEAR"?"bear":regime==="LATERAL"?"lateral":"unknown";
+    const trades=(state.log||[]).filter(l=>l.type==="SELL").slice(0,4);
+    const periods=["1H","1D","1W","1M","1Y","ALL"];
+    return`
+      <div class="m-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="m-ct" style="margin:0">${label}</div>
+          <span class="regime-pill ${rClass}">${regime}</span>
+        </div>
+        <div class="stat3">
+          <div class="stat-box"><div class="stat-lbl">Capital</div><div class="stat-val blue">${fU(state.totalValue)}</div></div>
+          <div class="stat-box"><div class="stat-lbl">Rendimiento</div><div class="stat-val" style="color:${clr(ret)}">${fP(ret)}</div></div>
+          <div class="stat-box"><div class="stat-lbl">Win Rate</div><div class="stat-val" style="color:${wr>50?"var(--green)":wr<40?"var(--red)":"var(--text)"}">${wr!=null?wr+"%":"—"}</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim2);margin-bottom:10px">
+          <span>Tick #${state.tick||0}</span>
+          <span>${fgTxt} (${fg})</span>
+          <span>Hoy: ${state.dailyTrades?.count||0}/${state.dailyLimit||10} ops</span>
+        </div>
+        <div class="period-row">
+          ${periods.map(p=>`<button class="pb ${p===period?"active":""}" onclick="${periodId}('${p}',this)">${p}</button>`).join("")}
+        </div>
+        <div class="chart-wrap" id="chart-${periodId}">${buildChart(eq,label.includes("PAPER")?"gold":"green",period)}</div>
+        ${trades.length?`
+          <div style="margin-top:8px">
+            <div class="m-ct" style="margin-bottom:6px">ÚLTIMAS VENTAS</div>
+            ${trades.map(t=>`<div class="trade-item">
+              <div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                  <span class="trade-badge t-sell">SELL</span>
+                  <span style="font-size:13px;font-weight:600">${t.symbol?.replace("USDT","")}</span>
+                </div>
+                <div style="font-size:10px;color:var(--dim2)">${t.reason||""} · ${fD(t.ts)}</div>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:${clr(t.pnl||0)}">${fP(t.pnl||0)}</div>
+            </div>`).join("")}
+          </div>`:""}
+      </div>`;
+  };
+  window._bs=bs;
+  document.getElementById("bot-content").innerHTML=`
+    <div style="margin-top:0">
+      ${renderBot(bs.paper,bs.paperEquity||[],"📋 PAPER",paperPeriod,"setPaperP")}
+      ${renderBot(bs.live,bs.liveEquity||[],"🎯 LIVE",livePeriod,"setLiveP")}
+    </div>`;
+}
+
+function setPaperP(p,btn){
+  paperPeriod=p;
+  document.querySelectorAll(`#chart-setPaperP`).forEach(()=>{});
+  const el=document.getElementById("chart-setPaperP");
+  if(el)el.innerHTML=buildChart(window._bs?.paperEquity||[],"gold",p);
+  document.querySelectorAll(".pb").forEach(b=>{ if(b.onclick?.toString().includes("setPaperP")) b.classList.toggle("active",b.textContent===p); });
+}
+function setLiveP(p,btn){
+  livePeriod=p;
+  const el=document.getElementById("chart-setLiveP");
+  if(el)el.innerHTML=buildChart(window._bs?.liveEquity||[],"green",p);
+  document.querySelectorAll(".pb").forEach(b=>{ if(b.onclick?.toString().includes("setLiveP")) b.classList.toggle("active",b.textContent===p); });
+}
+
+// ── NOTIFS ────────────────────────────────────────────────────────────────────
+function renderNotifs(){
+  const icons={circuit:"⚡",win:"💰",loss:"📉",sync:"🧠",daily:"📊",default:"🔔"};
+  const el=document.getElementById("notif-list");
+  if(!notifLog.length){el.innerHTML=`<div style="text-align:center;padding:16px;color:var(--dim);font-size:12px">Sin notificaciones</div>`;return;}
+  el.innerHTML=notifLog.map(n=>`
+    <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:20px;flex-shrink:0">${icons[n.type]||icons.default}</div>
+      <div><div style="font-size:13px;font-weight:600">${n.title}</div><div style="font-size:11px;color:var(--dim2);margin-top:2px">${n.body}</div><div style="font-size:10px;color:var(--dim);margin-top:3px">${new Date(n.ts).toLocaleString("es-ES")}</div></div>
+    </div>`).join("");
+}
+async function requestPush(){
+  if(!("Notification"in window)){alert("Tu navegador no soporta notificaciones");return;}
+  const p=await Notification.requestPermission();
+  alert(p==="granted"?"✅ Notificaciones activadas":"Actívalas en los ajustes del navegador.");
+}
+</script>
+</body>
+</html>

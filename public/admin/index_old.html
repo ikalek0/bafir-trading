@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BAFIR TRADING — Panel Gestor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0e13;--bg2:#10131a;--card:#13171f;--border:#1e2533;--border2:#2a3347;
+  --text:#dce8f5;--dim:#4a607a;--dim2:#7a90a8;
+  --gold:#c9a84c;--gold2:#e8c97a;--green:#00d97e;--red:#ff4d6a;--blue:#3b82f6;--purple:#a855f7;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2)}
+
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:50;transition:width .25s ease}
+.sidebar.collapsed{width:52px}
+.sidebar.collapsed .sb-title,.sidebar.collapsed .sb-sub,.sidebar.collapsed .ns,.sidebar.collapsed .sb-foot .up > div,.sidebar.collapsed .sb-foot .up .btn-lo{display:none}
+.sidebar.collapsed .ni span:first-child{margin:0}
+.sidebar.collapsed .ni{justify-content:center;padding:8px;gap:0}
+.sidebar.collapsed .ni .ni-label{display:none}
+.sidebar.collapsed .sb-logo{padding:12px;display:flex;justify-content:center}
+.sidebar.collapsed #sb-logo-img{display:none}
+.sb-toggle{position:absolute;right:-13px;top:22px;width:26px;height:26px;border-radius:50%;background:var(--bg2);border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--dim2);font-size:11px;z-index:51;transition:transform .25s}
+.sidebar.collapsed .sb-toggle{transform:rotate(180deg)}
+.sb-logo{padding:20px;border-bottom:1px solid var(--border)}
+.sb-mark{width:32px;height:32px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:9px}
+.sb-mark span{color:var(--bg);font-family:'Playfair Display',serif;font-size:14px;font-weight:900}
+.sb-title{font-family:'Playfair Display',serif;font-size:13px}
+.sb-sub{font-size:9px;color:var(--dim2);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.nav{flex:1;padding:10px;overflow-y:auto}
+.ns{font-size:9px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;padding:11px 10px 4px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:7px;cursor:pointer;font-size:12px;color:var(--dim2);transition:all .2s;margin-bottom:2px;border:none;background:transparent;width:100%;text-align:left;font-family:'DM Sans',sans-serif}
+.ni:hover{background:var(--border);color:var(--text)}
+.ni.active{background:linear-gradient(135deg,#1e2a1a,#1a2515);color:var(--gold);border:1px solid #c9a84c22}
+.sb-foot{padding:13px;border-top:1px solid var(--border)}
+.up{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:var(--border)}
+.ua{width:25px;height:25px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--bg)}
+.btn-lo{background:none;border:none;cursor:pointer;color:var(--dim);font-size:11px}
+
+.main{margin-left:220px;padding:24px 28px;min-height:100vh;transition:margin-left .25s ease}
+.page{display:none}.page.active{display:block;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+.ph{margin-bottom:22px;display:flex;align-items:flex-start;justify-content:space-between}
+.pt{font-family:'Playfair Display',serif;font-size:22px;font-weight:700}
+.ps{font-size:12px;color:var(--dim2);margin-top:3px}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:17px 19px}
+.ct{font-size:9px;letter-spacing:.12em;color:var(--dim2);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:5px}
+.ct::before{content:'';width:3px;height:3px;border-radius:50%;background:var(--gold)}
+
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:15px 17px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--gold),transparent)}
+.kl{font-size:8px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;margin-bottom:6px}
+.kv{font-size:21px;font-weight:700;font-family:'Playfair Display',serif;line-height:1}
+.ks{font-size:10px;color:var(--dim2);margin-top:4px}
+.ka{font-size:10px;color:var(--dim);margin-top:2px}
+
+.prow{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.pb{padding:4px 10px;border-radius:20px;font-size:10px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--dim2);font-family:'DM Sans',sans-serif;transition:all .2s}
+.pb:hover,.pb.active{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-size:8px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;padding:7px 9px;text-align:left;border-bottom:1px solid var(--border);font-weight:400}
+.tbl td{padding:8px 9px;border-bottom:1px solid #1a2030;vertical-align:middle}
+.tbl tr:hover td{background:var(--bg2)}
+.tbl tr:last-child td{border-bottom:none}
+
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:600;letter-spacing:.05em}
+.b-on{background:#00d97e18;color:var(--green);border:1px solid #00d97e30}
+.b-off{background:#ff4d6a18;color:var(--red);border:1px solid #ff4d6a30}
+.b-gold{background:#c9a84c18;color:var(--gold);border:1px solid #c9a84c30}
+.b-eur{background:#3b82f618;color:var(--blue);border:1px solid #3b82f630}
+.b-purple{background:#a855f718;color:var(--purple);border:1px solid #a855f730}
+.b-paid{background:#00d97e18;color:var(--green);border:1px solid #00d97e30}
+.b-pending{background:#ffd70018;color:#ffd700;border:1px solid #ffd70030}
+
+.mg{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.mc{border-radius:5px;padding:7px 4px;text-align:center}
+.ml{font-size:8px;color:var(--dim2);margin-bottom:2px}
+.mp{font-size:11px;font-weight:700}
+
+.field label{display:block;font-size:9px;font-weight:500;color:var(--dim2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:8px 11px;border:1.5px solid var(--border2);border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;background:var(--bg2);color:var(--text);outline:none;transition:border-color .2s}
+.field input:focus,.field select:focus{border-color:var(--gold)}
+.field textarea{resize:vertical;min-height:50px}
+
+.btn{padding:7px 15px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;letter-spacing:.04em;transition:all .2s}
+.btn-gold{background:var(--gold);color:var(--bg)}.btn-gold:hover{background:var(--gold2)}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--dim2)}.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-danger{background:transparent;border:1px solid #ff4d6a44;color:var(--red)}.btn-danger:hover{background:#ff4d6a18}
+.btn-green{background:#00d97e22;border:1px solid #00d97e44;color:var(--green)}.btn-green:hover{background:#00d97e33}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:13px;padding:24px;width:100%;max-width:560px;position:relative;max-height:90vh;overflow-y:auto}
+.mt{font-family:'Playfair Display',serif;font-size:16px;margin-bottom:16px}
+.mc-btn{position:absolute;top:13px;right:13px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px}
+
+/* Distribution config */
+.dist-config{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-top:12px}
+.dist-enabled{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.toggle{width:36px;height:20px;border-radius:10px;background:var(--border2);cursor:pointer;position:relative;transition:background .2s;border:none;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:white;transition:left .2s}
+.toggle.on::after{left:18px}
+
+/* Dual equity chart */
+.eq-legend{display:flex;gap:16px;margin-top:8px;font-size:10px}
+.eq-leg-item{display:flex;align-items:center;gap:5px}
+.eq-dot{width:10px;height:2px;border-radius:1px}
+.eq-canvas-wrap{position:relative;height:120px;width:100%;user-select:none}
+#eq-canvas{display:block;width:100%;height:120px;cursor:crosshair}
+.eq-tooltip{position:absolute;pointer-events:none;background:#1a1610;border:1px solid #3a342a;border-radius:5px;padding:6px 10px;font-size:11px;color:#e8e4de;white-space:nowrap;opacity:0;transition:opacity .15s;z-index:10}
+.eq-tooltip .et-val{font-size:13px;font-weight:700}
+.eq-tooltip .et-ts{font-size:9px;color:#6b6358;margin-top:2px}
+.eq-crosshair{position:absolute;top:0;bottom:20px;width:1px;background:#3a342a;pointer-events:none;opacity:0}
+
+/* Distribution timeline */
+.dist-timeline{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto}
+.dist-item{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:7px;background:var(--bg2);border:1px solid var(--border)}
+.dist-item.paid{border-color:#00d97e33}
+.dist-item.pending{border-color:#ffd70033}
+.dist-item.future{border-color:var(--border);opacity:.6}
+
+.green{color:var(--green)}.red{color:var(--red)}.gold{color:var(--gold)}.purple{color:var(--purple)}
+
+/* Participation ring */
+.part-ring{position:relative;width:90px;height:90px;flex-shrink:0}
+.part-ring svg{transform:rotate(-90deg)}
+.part-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+  <button class="sb-toggle" onclick="toggleSidebar()" title="Colapsar menú">◀</button>
+  <div class="sb-logo">
+    <img id="sb-logo-img" src="/bafir_logo_nombre.png" alt="BAFIR" style="width:140px;display:block;margin:0 auto" onerror="this.style.display='none';document.getElementById('sb-logo-fallback').style.display='block'">
+    <div id="sb-logo-fallback" style="display:none">
+      <div class="sb-mark"><span>B</span></div>
+      <div class="sb-title">BAFIR TRADING</div>
+    </div>
+    <div class="sb-sub">Panel gestor</div>
+  </div>
+  <nav class="nav">
+    <div class="ns">Principal</div>
+    <button class="ni active" onclick="showPage('overview')"><span>📊</span><span class="ni-label">Resumen global</span></button>
+    <button class="ni" onclick="showPage('performance')"><span>📈</span><span class="ni-label">Rendimiento</span></button>
+    <button class="ni" onclick="showPage('distributions')"><span>💸</span><span class="ni-label">Distribuciones</span></button>
+    <div class="ns">Clientes</div>
+    <button class="ni" onclick="showPage('clients')"><span>👥</span><span class="ni-label">Mis clientes</span></button>
+    <button class="ni" onclick="showPage('client-detail')"><span>🔍</span><span class="ni-label">Ver cliente</span></button>
+    <button class="ni" onclick="showPage('movements')"><span>💶</span><span class="ni-label">Movimientos</span></button>
+    <div class="ns">Sistema</div>
+    <button class="ni" onclick="showPage('settings')"><span>⚙️</span><span class="ni-label">Ajustes</span></button>
+  </nav>
+  <div class="sb-foot">
+    <div class="up">
+      <div class="ua">I</div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:500">Iñigo</div><div style="font-size:10px;color:var(--dim2)">Admin · Gestor</div></div>
+      <button class="btn-lo" onclick="logout()">✕</button>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+
+<!-- OVERVIEW -->
+<div class="page active" id="page-overview">
+  <div class="ph"><div><div class="pt">Resumen Global</div><div class="ps" id="ov-date">—</div></div></div>
+  <div class="g4" style="margin-bottom:13px">
+    <div class="kpi" onclick="openModal('modal-manager-capital')" style="cursor:pointer" title="Click para editar tu capital">
+      <div class="kl">Capital aportado · ✎ editar</div>
+      <div class="kv gold" id="ov-balance">—</div>
+      <div class="ka" id="ov-balance-sub">Balance total · ✎ editar</div>
+    </div>
+    <div class="kpi"><div class="kl">Rendimiento total bot</div><div class="kv" id="ov-ret">—</div><div class="ks" id="ov-ret-abs">—</div></div>
+    <div class="kpi"><div class="kl">Clientes</div><div class="kv" id="ov-nc">—</div><div class="ks" id="ov-unalloc">—</div></div>
+    <div class="kpi"><div class="kl">Distribuciones próx.</div><div class="kv purple" id="ov-dist">—</div><div class="ks">siguiente ciclo</div></div>
+  </div>
+  <!-- Bot estado rápido -->
+  <div class="g4" style="margin-bottom:13px">
+    <div class="kpi">
+      <div class="kl" id="bot-confidence-label">Confianza bot live</div>
+      <div class="kv" id="bot-confidence">—</div>
+      <div class="ka" id="bot-confidence-sub">Score 0-100</div>
+    </div>
+    <div class="kpi">
+      <div class="kl">Momentum hoy</div>
+      <div class="kv" id="bot-momentum">—</div>
+      <div class="ka" id="bot-momentum-sub">P&L acumulado hoy</div>
+    </div>
+    <div class="kpi">
+      <div class="kl">CryptoPanic</div>
+      <div class="kv" id="bot-news">—</div>
+      <div class="ka" id="bot-news-sub">Estado noticias</div>
+    </div>
+    <div class="kpi">
+      <div class="kl">Régimen mercado</div>
+      <div class="kv" id="bot-regime">—</div>
+      <div class="ka" id="bot-regime-sub">Live · Paper</div>
+    </div>
+  </div>
+  <div class="g2" style="margin-bottom:13px">
+    <div class="card">
+      <div class="ct" style="display:flex;align-items:center;justify-content:space-between">
+        <span>CURVA DE CAPITAL</span>
+          <button class="btn btn-outline" style="font-size:10px;padding:3px 8px;color:var(--red);border-color:var(--red)" 
+            onclick="if(confirm('¿Resetear datos de equity? Se borrarán todas las curvas.'))api('POST','/api/admin/reset-equity').then(()=>location.reload())" 
+            title="Borrar datos de equity incorrectos">↺ Reset</button>
+        <div style="display:flex;gap:4px">
+          <button class="pb active" id="btn-show-live" onclick="setBotView('live',this)">Live</button>
+          <button class="pb" id="btn-show-paper" onclick="setBotView('paper',this)">Paper</button>
+          <button class="pb" id="btn-show-both" onclick="setBotView('both',this)">Ambos</button>
+        </div>
+      </div>
+      <div class="eq-canvas-wrap">
+        <canvas id="eq-canvas"></canvas>
+        <div class="eq-crosshair" id="eq-crosshair"></div>
+        <div class="eq-tooltip" id="eq-tooltip"><div class="et-val" id="et-val">—</div><div class="et-ts" id="et-ts">—</div></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:6px;font-size:10px">
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:2px;background:var(--gold)"></div><span style="color:var(--dim2)" id="live-equity-label">Live: —</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:2px;background:var(--blue);border-top:1px dashed var(--blue)"></div><span style="color:var(--dim2)" id="paper-equity-label">Paper: —</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">RENDIMIENTO POR PERÍODO</div>
+      <div class="prow" id="ov-prow"></div>
+      <div id="ov-pd"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">MES A MES (USD)</div>
+    <div class="mg" id="ov-mg"></div>
+  </div>
+</div>
+
+<!-- PERFORMANCE -->
+<div class="page" id="page-performance">
+  <div class="ph"><div><div class="pt">Rendimiento</div><div class="ps">Análisis completo</div></div></div>
+  <div class="g3" style="margin-bottom:13px" id="perf-kpis"></div>
+  <div class="card">
+    <div class="ct">TABLA MES A MES</div>
+    <table class="tbl"><thead><tr><th>Mes</th><th>Inicio USD</th><th>Fin USD</th><th>P&L USD</th><th>P&L %</th></tr></thead><tbody id="perf-tbody"></tbody></table>
+  </div>
+  <div class="card" style="margin-top:13px">
+    <div class="ct" style="display:flex;align-items:center;justify-content:space-between">
+      <span>🧠 RISK LEARNING — APRENDIZAJE DE REGLAS</span>
+      <button class="btn btn-outline" style="font-size:10px;padding:4px 10px" onclick="loadRiskLearning()">Actualizar</button>
+    </div>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:12px">El bot evalúa retroactivamente si sus decisiones de riesgo fueron correctas y ajusta los umbrales automáticamente.</div>
+    <div id="rl-panel" style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
+      <div>
+        <div style="font-size:10px;font-weight:600;color:var(--gold);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Live Bot</div>
+        <div id="rl-live">—</div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:600;color:var(--blue);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Paper Bot</div>
+        <div id="rl-paper">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DISTRIBUTIONS -->
+<div class="page" id="page-distributions">
+  <div class="ph"><div><div class="pt">Distribuciones</div><div class="ps">Pagos periódicos a clientes</div></div></div>
+  <div class="card" style="margin-bottom:13px">
+    <div class="ct">RESUMEN DE DISTRIBUCIONES</div>
+    <div class="g3" id="dist-summary"></div>
+  </div>
+  <div class="card">
+    <div class="ct">CALENDARIO DE DISTRIBUCIONES</div>
+    <table class="tbl"><thead><tr><th>Cliente</th><th>Fecha</th><th>Importe</th><th>Base</th><th>Periodicidad</th><th>Estado</th><th></th></tr></thead>
+    <tbody id="dist-calendar-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- CLIENTS -->
+<div class="page" id="page-clients">
+  <div class="ph">
+    <div><div class="pt">Clientes</div><div class="ps">Gestión de carteras</div></div>
+    <button class="btn btn-gold" onclick="openModal('modal-new-client')">+ Nuevo cliente</button>
+  </div>
+  <div class="card">
+    <table class="tbl"><thead><tr><th>Cliente</th><th>Moneda</th><th>% bot</th><th>Depositado</th><th>Valor actual</th><th>P&L</th><th>Distribución</th><th>Estado</th><th></th></tr></thead>
+    <tbody id="clients-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- CLIENT DETAIL -->
+<div class="page" id="page-client-detail">
+  <div class="ph">
+    <div><div class="pt" id="cd-name">—</div><div class="ps" id="cd-sub">—</div></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn btn-outline" onclick="openDepModal('deposit')">+ Depósito</button>
+      <button class="btn btn-outline" onclick="openDepModal('withdrawal')">− Retirada</button>
+      <button class="btn btn-purple" onclick="openDistConfig()" style="background:#a855f722;border:1px solid #a855f744;color:var(--purple);padding:7px 15px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">⚙ Distribución</button>
+      <button class="btn btn-outline" onclick="showPage('clients')">← Volver</button>
+    </div>
+  </div>
+
+  <!-- KPIs extendidos -->
+  <div class="g4" style="margin-bottom:13px">
+    <div class="kpi"><div class="kl">Valor Actual</div><div class="kv gold" id="cd-val">—</div><div class="ka" id="cd-val-alt">—</div></div>
+    <div class="kpi"><div class="kl">Total Depositado</div><div class="kv" id="cd-dep">—</div><div class="ks" id="cd-ndep">—</div></div>
+    <div class="kpi"><div class="kl">P&L Total (TWR)</div><div class="kv" id="cd-pnl">—</div><div class="ks" id="cd-pnlpct">—</div></div>
+    <div class="kpi"><div class="kl">ROI s/ Aport. Inicial</div><div class="kv purple" id="cd-roi">—</div><div class="ks" id="cd-roi-sub">—</div></div>
+  </div>
+
+  <!-- Participación + distribución -->
+  <div class="g3" style="margin-bottom:13px">
+    <div class="card" style="display:flex;align-items:center;gap:16px">
+      <div class="part-ring">
+        <svg width="90" height="90" viewBox="0 0 90 90">
+          <circle cx="45" cy="45" r="35" fill="none" stroke="#1e2533" stroke-width="8"/>
+          <circle id="cd-part-ring" cx="45" cy="45" r="35" fill="none" stroke="#c9a84c" stroke-width="8" stroke-dasharray="0 220" stroke-linecap="round"/>
+        </svg>
+        <div class="part-center">
+          <div style="font-size:16px;font-weight:700;color:var(--gold)" id="cd-part-pct">—</div>
+          <div style="font-size:8px;color:var(--dim2)">del fondo</div>
+        </div>
+      </div>
+      <div>
+        <div class="ct" style="margin-bottom:6px">PARTICIPACIÓN</div>
+        <div style="font-size:12px;color:var(--dim2);line-height:1.7">
+          <div>% asignado: <span style="color:var(--gold)" id="cd-share-txt">—</span></div>
+          <div>Aportación inicial: <span style="color:var(--text)" id="cd-first-dep">—</span></div>
+          <div>Distribuciones pagadas: <span style="color:var(--purple)" id="cd-dist-paid">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct">PRÓXIMA DISTRIBUCIÓN</div>
+      <div id="cd-next-dist">
+        <div style="color:var(--dim);font-size:12px">Sin distribución configurada</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct">HISTORIAL DISTRIBUCIONES</div>
+      <div class="dist-timeline" id="cd-dist-timeline"></div>
+    </div>
+  </div>
+
+  <!-- Curvas dobles -->
+  <div class="card" style="margin-bottom:13px">
+    <div class="ct">EVOLUCIÓN DEL CAPITAL — DOBLE CURVA</div>
+    <div class="eq-canvas-wrap" style="height:130px">
+      <canvas id="cd-canvas" style="height:130px"></canvas>
+      <div class="eq-crosshair" id="cd-crosshair"></div>
+      <div class="eq-tooltip" id="cd-tooltip"><div class="et-val" id="cd-val">—</div><div class="et-ts" id="cd-ts">—</div></div>
+    </div>
+    <div class="eq-legend" style="margin-top:10px">
+      <div class="eq-leg-item"><div class="eq-dot" style="background:var(--gold)"></div><span style="color:var(--dim2)">Sin distribuciones (bruto)</span></div>
+      <div class="eq-leg-item"><div class="eq-dot" style="background:#a855f7"></div><span style="color:var(--dim2)">Con distribuciones (neto)</span></div>
+    </div>
+  </div>
+
+  <!-- Períodos + mensual -->
+  <div class="prow" id="cd-prow"></div>
+  <div class="g2" style="margin-bottom:13px">
+    <div class="card"><div class="ct">PERÍODO</div><div id="cd-pd"></div></div>
+    <div class="card"><div class="ct">MES A MES</div><div class="mg" id="cd-mg"></div></div>
+  </div>
+
+  <!-- Depósitos + acceso -->
+  <div class="g2">
+    <div class="card">
+      <div class="ct">DEPÓSITOS Y RETIRADAS</div>
+      <table class="tbl"><thead><tr><th>Fecha</th><th>Tipo</th><th>Importe</th><th>Moneda</th><th>Nota</th><th></th></tr></thead>
+      <tbody id="cd-dep-tbody"></tbody></table>
+    </div>
+    <div class="card">
+      <div class="ct">ACCESO DEL CLIENTE</div>
+      <div style="background:var(--bg2);border-radius:7px;padding:11px;font-family:monospace;font-size:11px;margin-bottom:10px">
+        <div style="margin-bottom:5px"><span style="color:var(--dim)">URL: </span><span id="cd-url" style="color:var(--gold)">—</span></div>
+        <div><span style="color:var(--dim)">ID: </span><span id="cd-id" style="color:var(--text)">—</span></div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-outline" onclick="copyAccess()">Copiar acceso</button>
+        <button class="btn btn-outline" onclick="openEditShare()">Editar %</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOVEMENTS -->
+<div class="page" id="page-movements">
+  <div class="ph"><div><div class="pt">Movimientos</div></div></div>
+  <div class="card">
+    <table class="tbl"><thead><tr><th>Fecha</th><th>Cliente</th><th>Tipo</th><th>Importe</th><th>Moneda</th><th>Nota</th></tr></thead>
+    <tbody id="mov-tbody"></tbody></table>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <div class="ph"><div><div class="pt">Seguridad y Ajustes</div></div></div>
+
+  <!-- Aviso sesión por expirar -->
+  <div id="session-warning" style="display:none;background:#1a1505;border:1px solid #ffd70044;border-radius:8px;padding:10px 14px;margin-bottom:13px;font-size:12px;color:#ffd700;display:flex;align-items:center;justify-content:space-between">
+    <span>⚠️ Tu sesión expira en <span id="session-countdown">5:00</span></span>
+    <button class="btn btn-outline" style="padding:4px 12px;font-size:10px" onclick="renewSession()">Renovar sesión</button>
+  </div>
+
+  <div class="g2" style="margin-bottom:13px">
+    <!-- 2FA -->
+    <div class="card">
+      <div class="ct" style="color:var(--green)">🔐 AUTENTICACIÓN DE DOS FACTORES (2FA)</div>
+      <div id="twofa-status" style="margin-bottom:14px"></div>
+      <div id="twofa-setup" style="display:none">
+        <div style="font-size:11px;color:var(--dim2);margin-bottom:12px">Escanea este código QR con Google Authenticator:</div>
+        <div style="text-align:center;margin-bottom:12px"><img id="twofa-qr" src="" style="border-radius:8px;border:1px solid var(--border)"></div>
+        <div style="font-size:10px;color:var(--dim2);margin-bottom:10px;text-align:center">O introduce el secreto manualmente: <code id="twofa-secret" style="color:var(--gold)"></code></div>
+        <div class="field" style="margin-bottom:10px"><label>Código de verificación (6 dígitos)</label><input id="twofa-code" maxlength="6" inputmode="numeric" placeholder="123456"></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-gold" onclick="confirm2FA()">Activar 2FA</button>
+          <button class="btn btn-outline" onclick="cancel2FASetup()">Cancelar</button>
+        </div>
+        <div id="twofa-msg" style="font-size:11px;margin-top:8px;display:none"></div>
+      </div>
+      <div id="twofa-disable" style="display:none">
+        <div class="field" style="margin-bottom:10px"><label>Código actual para desactivar</label><input id="twofa-disable-code" maxlength="6" inputmode="numeric" placeholder="123456"></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-danger" onclick="disable2FA()">Desactivar 2FA</button>
+          <button class="btn btn-outline" onclick="document.getElementById('twofa-disable').style.display='none'">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- IP WHITELIST -->
+    <div class="card">
+      <div class="ct" style="color:var(--blue)">🌐 WHITELIST DE IPs</div>
+      <div style="font-size:11px;color:var(--dim2);margin-bottom:12px">Si añades IPs, solo esas podrán acceder al panel de gestor. Deja vacío para permitir cualquier IP.</div>
+      <div id="ip-list" style="margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input id="ip-input" placeholder="ej. 123.456.789.0" style="flex:1;padding:7px 10px;border:1.5px solid var(--border2);border-radius:6px;font-size:12px;background:var(--bg2);color:var(--text);font-family:'DM Sans',sans-serif">
+        <input id="ip-label" placeholder="Etiqueta (ej. Casa)" style="flex:1;padding:7px 10px;border:1.5px solid var(--border2);border-radius:6px;font-size:12px;background:var(--bg2);color:var(--text);font-family:'DM Sans',sans-serif">
+        <button class="btn btn-outline" onclick="addMyIP()">+ Mi IP</button>
+        <button class="btn btn-gold" onclick="addIP()">Añadir</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:13px">
+    <!-- Cambiar contraseña -->
+    <div class="card">
+      <div class="ct">🔑 CAMBIAR CONTRASEÑA</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="field"><label>Nueva contraseña (mín. 8 caracteres)</label><input type="password" id="new-pw"></div>
+        <div class="field"><label>Confirmar</label><input type="password" id="new-pw2"></div>
+        <button class="btn btn-gold" onclick="changeAdminPw()">Guardar contraseña</button>
+        <div id="pw-msg" style="font-size:11px;display:none"></div>
+      </div>
+    </div>
+
+    <!-- Info + Audit -->
+    <div class="card">
+      <div class="ct">📋 LOG DE AUDITORÍA</div>
+      <div style="font-size:11px;color:var(--dim2);margin-bottom:10px">Últimos accesos y acciones registradas</div>
+      <div id="audit-log" style="max-height:200px;overflow-y:auto;font-size:10px;font-family:monospace"></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- Alert Config -->
+<div class="card" style="margin:16px 0">
+  <div style="padding:12px">
+    <div style="font-weight:600;margin-bottom:8px;font-size:13px">Alertas Telegram</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div style="font-size:11px;color:#888;margin-bottom:3px">Live ganancia %</div><input id="alert-win" type="number" value="3" step="0.5" style="width:100%;padding:5px;background:#1a1814;border:1px solid #333;color:#e8e0d0;border-radius:4px"></div>
+      <div><div style="font-size:11px;color:#888;margin-bottom:3px">Live pérdida %</div><input id="alert-loss" type="number" value="3" step="0.5" style="width:100%;padding:5px;background:#1a1814;border:1px solid #333;color:#e8e0d0;border-radius:4px"></div>
+      <div><div style="font-size:11px;color:#888;margin-bottom:3px">Paper ganancia %</div><input id="alert-paper-win" type="number" value="5" step="0.5" style="width:100%;padding:5px;background:#1a1814;border:1px solid #333;color:#e8e0d0;border-radius:4px"></div>
+      <div><div style="font-size:11px;color:#888;margin-bottom:3px">Paper pérdida %</div><input id="alert-paper-loss" type="number" value="4" step="0.5" style="width:100%;padding:5px;background:#1a1814;border:1px solid #333;color:#e8e0d0;border-radius:4px"></div>
+    </div>
+    <button onclick="saveAlertConfig()" style="margin-top:8px;width:100%;padding:7px;background:#c9a84c;color:#000;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px">Guardar alertas</button>
+  </div>
+</div>
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-new-client">
+  <div class="modal">
+    <div class="mt">Nuevo cliente</div>
+    <button class="mc-btn" onclick="closeModal('modal-new-client')">✕</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px">
+      <div class="field"><label>Nombre</label><input id="nc-name"></div>
+      <div class="field"><label>Email</label><input id="nc-email" type="email"></div>
+      <div class="field"><label>Contraseña dashboard</label><input id="nc-pw" type="password"></div>
+      <div class="field"><label>Moneda</label><select id="nc-cur"><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
+      <div class="field"><label>Teléfono (opcional)</label><input id="nc-phone" placeholder="+34 600 000 000"></div>
+      <div class="field"><label>Modo depósito</label><select id="nc-mode"><option value="managed">Cuenta Binance de BAFIR</option><option value="binance">Cuenta Binance del cliente</option></select></div>
+    </div>
+    <div class="field" style="margin-bottom:13px"><label>Notas</label><textarea id="nc-notes"></textarea></div>
+    <div style="display:flex;gap:7px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-new-client')">Cancelar</button>
+      <button class="btn btn-gold" onclick="createClient()">Crear</button>
+    </div>
+    <div id="nc-msg" style="font-size:11px;margin-top:8px;display:none"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-deposit">
+  <div class="modal">
+    <div class="mt" id="dep-mt">Añadir depósito</div>
+    <button class="mc-btn" onclick="closeModal('modal-deposit')">✕</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:13px">
+      <div class="field"><label>Importe</label><input id="dep-amount" type="number" min="0"></div>
+      <div class="field"><label>Moneda</label><select id="dep-cur"><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
+      <div class="field"><label>Fecha</label><input id="dep-date" type="date"></div>
+      <div class="field"><label>Nota</label><input id="dep-note"></div>
+    </div>
+    <div style="display:flex;gap:7px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-deposit')">Cancelar</button>
+      <button class="btn btn-gold" id="dep-submit" onclick="submitDeposit()">Añadir</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit-share">
+  <div class="modal" style="max-width:360px">
+    <div class="mt">Editar participación</div>
+    <button class="mc-btn" onclick="closeModal('modal-edit-share')">✕</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px">
+      <div class="field"><label>% del bot</label><input id="es-share" type="number" min="0" max="100"></div>
+      <div class="field"><label>Moneda</label><select id="es-cur"><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
+    </div>
+    <div style="display:flex;gap:7px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-share')">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveShare()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-dist-config">
+  <div class="modal">
+    <div class="mt">⚙ Configurar distribución periódica</div>
+    <button class="mc-btn" onclick="closeModal('modal-dist-config')">✕</button>
+    <div style="background:var(--bg2);border-radius:7px;padding:11px 13px;margin-bottom:14px;font-size:11px;color:var(--dim2)">
+      Define qué % del capital del cliente se le pagará periódicamente. El sistema calculará automáticamente las fechas pasadas y futuras.
+    </div>
+    <div class="dist-enabled" style="margin-bottom:14px">
+      <button class="toggle" id="dist-toggle" onclick="toggleDist()"></button>
+      <span style="font-size:12px;color:var(--dim2)">Distribución activada</span>
+    </div>
+    <div id="dist-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px">
+      <div class="field"><label>Porcentaje (%)</label><input id="dist-pct" type="number" min="0" max="100" step="0.1" placeholder="ej. 5"></div>
+      <div class="field"><label>Periodicidad</label>
+        <select id="dist-period"><option value="monthly">Mensual</option><option value="quarterly">Trimestral</option><option value="annual">Anual</option></select>
+      </div>
+      <div class="field"><label>Base de cálculo</label>
+        <select id="dist-base"><option value="initial">Aportación inicial (fija)</option><option value="current">Valor actual de la cartera (variable)</option></select>
+      </div>
+      <div class="field"><label>Moneda de pago</label>
+        <select id="dist-cur"><option value="USD">USD</option><option value="EUR">EUR</option></select>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border-radius:7px;padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--dim2)" id="dist-preview"></div>
+    <div style="display:flex;gap:7px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-dist-config')">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveDist()">Guardar configuración</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API="";
+let token=localStorage.getItem("bafir_token")||"";
+let currentClientId=null, depType="deposit", distEnabled=false;
+
+async function api(method,url,body){
+  const r=await fetch(API+url,{method,headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:body?JSON.stringify(body):undefined});
+  if(r.status===401){localStorage.clear();window.location.href="/";return null;}
+  return r.json();
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById("sidebar");
+  const main = document.querySelector(".main");
+  const collapsed = sb.classList.toggle("collapsed");
+  main.style.marginLeft = collapsed ? "52px" : "220px";
+  localStorage.setItem("sidebarCollapsed", collapsed ? "1" : "0");
+}
+
+// Restore sidebar state on load
+(function() {
+  if (localStorage.getItem("sidebarCollapsed") === "1") {
+    const sb = document.getElementById("sidebar");
+    const main = document.querySelector(".main");
+    if (sb) { sb.classList.add("collapsed"); if(main) main.style.marginLeft="52px"; }
+  }
+})();
+
+async function logout(){await api("POST","/api/auth/logout");localStorage.clear();window.location.href="/";}
+
+function showPage(id){
+  document.querySelectorAll(".page,.ni").forEach(el=>el.classList.remove("active"));
+  document.getElementById("page-"+id)?.classList.add("active");
+  document.querySelector(`.ni[onclick="showPage('${id}')"]`)?.classList.add("active");
+  ({overview:loadOverview,performance:()=>{loadPerformance();loadRiskLearning();},distributions:loadDistributions,clients:loadClients,movements:loadMovements,settings:loadSettings}[id]||(() => {}))();
+}
+
+// Format
+const fUSD=n=>"$"+new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+const fEUR=n=>"€"+new Intl.NumberFormat("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+const fC=(n,c)=>c==="EUR"?fEUR(n):fUSD(n);
+const fP=n=>(n>=0?"+":"")+n.toFixed(2)+"%";
+const clr=n=>n>=0?"var(--green)":"var(--red)";
+const fD=ts=>new Date(ts).toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric"});
+
+function renderPeriods(rid,did,periods){
+  const c=document.getElementById(rid); if(!c||!periods)return;
+  c.innerHTML=periods.map(p=>`<button class="pb ${p.period==="1M"?"active":""}" onclick="selP('${rid}','${did}',${JSON.stringify(periods).replace(/"/g,'&quot;')},'${p.period}')">${p.period}</button>`).join("");
+  const def=periods.find(p=>p.period==="1M")||periods[0];
+  if(def) renderPD(did,def);
+}
+function selP(rid,did,periods,period){
+  document.querySelectorAll(`#${rid} .pb`).forEach(b=>b.classList.toggle("active",b.textContent===period));
+  const p=periods.find(x=>x.period===period); if(p) renderPD(did,p);
+}
+function renderPD(did,p){
+  const el=document.getElementById(did); if(!el)return;
+  const c=p.currency||"USD";
+  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+    <div style="text-align:center;padding:10px;background:var(--bg2);border-radius:7px"><div style="font-size:8px;color:var(--dim);letter-spacing:.1em;margin-bottom:3px">P&L</div><div style="font-size:17px;font-weight:700;color:${clr(p.pnl||0)}">${fC(p.pnl||0,c)}</div></div>
+    <div style="text-align:center;padding:10px;background:var(--bg2);border-radius:7px"><div style="font-size:8px;color:var(--dim);letter-spacing:.1em;margin-bottom:3px">P&L %</div><div style="font-size:17px;font-weight:700;color:${clr(p.pnlPct||0)}">${fP(p.pnlPct||0)}</div></div>
+    <div style="text-align:center;padding:10px;background:var(--bg2);border-radius:7px"><div style="font-size:8px;color:var(--dim);letter-spacing:.1em;margin-bottom:3px">VALOR</div><div style="font-size:17px;font-weight:700;color:var(--gold)">${fC(p.end||0,c)}</div></div>
+  </div>`;
+}
+function renderMonthly(cid,monthly,cur="USD"){
+  const el=document.getElementById(cid); if(!el||!monthly?.length){if(el)el.innerHTML=`<div style="color:var(--dim);font-size:11px;padding:14px;text-align:center;grid-column:1/-1">Sin datos aún</div>`;return;}
+  el.innerHTML=monthly.slice(-12).map(m=>{
+    const bg=m.pnlPct>=0?`rgba(0,217,126,${Math.min(.4,Math.abs(m.pnlPct)/20)})`:`rgba(255,77,106,${Math.min(.4,Math.abs(m.pnlPct)/20)})`;
+    return `<div class="mc" style="background:${bg};border:1px solid ${m.pnlPct>=0?"#00d97e22":"#ff4d6a22"}"><div class="ml">${m.label}</div><div class="mp" style="color:${clr(m.pnlPct)}">${fP(m.pnlPct)}</div><div style="font-size:8px;color:var(--dim2);margin-top:1px">${fC(m.pnl,cur)}</div></div>`;
+  }).join("");
+}
+function formatEqTime(ts, data) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  const span = data.length > 1 ? data[data.length-1].ts - data[0].ts : 0;
+  if (span < 3600000*2) return d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+  if (span < 86400000*3) return d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+  if (span < 86400000*14) return d.toLocaleDateString("es-ES",{weekday:"short",day:"2-digit"});
+  return d.toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit"});
+}
+
+function drawEqCanvas(liveData, paperData, showLive, showPaper) {
+  const canvas = document.getElementById("eq-canvas");
+  if (!canvas) return;
+  const ctx0 = canvas.getContext("2d");
+  const hasData = (showLive && liveData?.length) || (showPaper && paperData?.length);
+  if (!hasData) {
+    const W0 = canvas.offsetWidth || 600;
+    canvas.width = W0; canvas.height = 120;
+    ctx0.fillStyle = "rgba(107,99,88,0.6)";
+    ctx0.font = "11px Playfair Display,serif"; ctx0.textAlign = "center";
+    ctx0.fillText("Sin datos de equity aún — el bot está acumulando historial", W0/2, 60);
+    return;
+  }
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const W = rect.width || 600, H = 120;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+"px"; canvas.style.height = H+"px";
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const AXIS_H=18, PAD=6, chartH=H-AXIS_H-PAD, chartW=W-PAD*2;
+
+  const toPoints = data => data
+    .filter(e => e != null)
+    .map((e,i)=>({
+      v: typeof e==="object" ? +(e.value??e.v??0) : +e,
+      t: e.ts ? (typeof e.ts==="string" ? new Date(e.ts).getTime() : +e.ts) : (e.t ? +e.t : (Date.now() - (data.length-1-i)*60000))
+    }))
+    .filter(e => e.v > 0 && e.t > 0);
+
+  const live = showLive && liveData?.length ? toPoints(liveData) : [];
+  const paper = showPaper && paperData?.length ? toPoints(paperData) : [];
+  const all = [...live, ...paper];
+  if (!all.length) return;
+
+  const allVals = all.map(p=>p.v);
+  const minV=Math.min(...allVals), maxV=Math.max(...allVals), rangeV=maxV-minV||1;
+  const minT=Math.min(...all.map(p=>p.t)), maxT=Math.max(...all.map(p=>p.t)), rangeT=maxT-minT||1;
+
+  const xOf = t => PAD + ((t-minT)/rangeT)*chartW;
+  const yOf = v => PAD + chartH - ((v-minV)/rangeV)*chartH;
+
+  const drawSeries = (pts, color, fill, dashed=false) => {
+    if (!pts.length) return;
+    ctx.beginPath();
+    ctx.moveTo(xOf(pts[0].t), yOf(pts[0].v));
+    pts.forEach(p => ctx.lineTo(xOf(p.t), yOf(p.v)));
+    ctx.lineTo(xOf(pts[pts.length-1].t), PAD+chartH);
+    ctx.lineTo(xOf(pts[0].t), PAD+chartH);
+    ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(xOf(pts[0].t), yOf(pts[0].v));
+    pts.forEach(p => ctx.lineTo(xOf(p.t), yOf(p.v)));
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    if (dashed) ctx.setLineDash([4,3]); else ctx.setLineDash([]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  };
+
+  if (paper.length) drawSeries(paper, "#3b82f6", "rgba(59,130,246,0.08)", true);
+  if (live.length)  drawSeries(live,  "#c9a84c", "rgba(201,168,76,0.12)");
+
+  // X axis labels
+  ctx.fillStyle = "rgba(107,99,88,0.9)"; ctx.font = "9px DM Sans,sans-serif"; ctx.textAlign = "center";
+  const refData = live.length ? live : paper;
+  const nL = Math.min(5, refData.length);
+  for (let i=0; i<nL; i++) {
+    const idx = Math.round(i/(nL-1)*(refData.length-1));
+    const p = refData[idx];
+    ctx.fillText(formatEqTime(p.t, refData), xOf(p.t), H-3);
+    ctx.strokeStyle="rgba(107,99,88,0.15)"; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(xOf(p.t),PAD+chartH); ctx.lineTo(xOf(p.t),H-AXIS_H); ctx.stroke();
+  }
+
+  // Store for hover
+  canvas._live = live; canvas._paper = paper;
+  canvas._bounds = {W,H,chartH,chartW,PAD,AXIS_H,minV,rangeV,minT,rangeT};
+
+  // ── Draw trade marks (entry/exit dots) ──────────────────────────────────
+  const trades = (_botStatus?._recentTrades||[]);
+  if (trades.length && live.length) {
+    for (const t of trades) {
+      const ts = t.ts ? new Date(t.ts).getTime() : null;
+      if (!ts || ts < minT || ts > maxT) continue;
+      const px = PAD + ((ts-minT)/rangeT)*chartW;
+      // Find nearest equity value at this timestamp
+      const nearest = live.reduce((best,p)=>Math.abs(p.t-ts)<Math.abs(best.t-ts)?p:best, live[0]);
+      const py = yOf(nearest.v);
+      const win = t.pnl >= 0;
+      ctx.beginPath();
+      ctx.arc(px, py, 4, 0, Math.PI*2);
+      ctx.fillStyle = win ? "rgba(0,217,126,0.9)" : "rgba(255,77,106,0.9)";
+      ctx.fill();
+      ctx.strokeStyle = win ? "#00d97e" : "#ff4d6a";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+}
+
+// Bafir chart hover
+(function setupEqHover(){
+  const canvas = document.getElementById("eq-canvas");
+  if (!canvas) return;
+  const tip = document.getElementById("eq-tooltip");
+  const cross = document.getElementById("eq-crosshair");
+
+  function findNearest(pts, mx, b) {
+    if (!pts?.length) return null;
+    const {PAD,chartW,minT,rangeT} = b;
+    return pts.reduce((best,p) => {
+      const px = PAD + ((p.t-minT)/rangeT)*chartW;
+      return Math.abs(px-mx) < Math.abs((best?PAD+((best.t-minT)/rangeT)*chartW:999)-mx) ? p : best;
+    }, null);
+  }
+
+  function onMove(e) {
+    const b = canvas._bounds; if (!b) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX ?? e.touches?.[0]?.clientX) - rect.left;
+    const live = canvas._live, paper = canvas._paper;
+    const pt = findNearest(live?.length ? live : paper, mx, b);
+    if (!pt) return;
+    const px = b.PAD + ((pt.t-b.minT)/b.rangeT)*b.chartW;
+    const lv = findNearest(live, mx, b);
+    const pv = findNearest(paper, mx, b);
+    const fv = v => v!=null ? "$"+Number(v).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : "—";
+    document.getElementById("et-val").innerHTML =
+      (lv ? `<span style="color:#c9a84c">L:${fv(lv.v)}</span>` : "") +
+      (lv && pv ? " · " : "") +
+      (pv ? `<span style="color:#3b82f6">P:${fv(pv.v)}</span>` : "");
+    document.getElementById("et-ts").textContent = new Date(pt.t).toLocaleString("es-ES");
+    tip.style.left = (px+8>b.W-180 ? px-188 : px+8)+"px";
+    tip.style.top = "4px"; tip.style.opacity = "1";
+    cross.style.left = px+"px"; cross.style.opacity = "1";
+  }
+
+  canvas.addEventListener("mousemove", onMove);
+  canvas.addEventListener("mouseleave", () => { tip.style.opacity="0"; cross.style.opacity="0"; });
+})();
+
+function renderEquity(svgId,fillId,lineId,curve,color="#c9a84c"){
+  // Legacy stub — no longer used for main chart
+}
+
+function drawClientCanvas(gross, net) {
+  const canvas = document.getElementById("cd-canvas");
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const W = rect.width || 600, H = 130;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+"px"; canvas.style.height = H+"px";
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const AXIS_H=18, PAD=6, chartH=H-AXIS_H-PAD, chartW=W-PAD*2;
+
+  const toPoints = data => (data||[]).map(e=>({
+    v: e.value??e.v??0,
+    t: e.ts ? new Date(e.ts).getTime() : Date.now()
+  }));
+
+  const g = toPoints(gross), n = toPoints(net);
+  const all = [...g, ...n];
+  if (!all.length) return;
+
+  const allVals = all.map(p=>p.v);
+  const minV=Math.min(...allVals), maxV=Math.max(...allVals), rangeV=maxV-minV||1;
+  const minT=Math.min(...all.map(p=>p.t)), maxT=Math.max(...all.map(p=>p.t)), rangeT=maxT-minT||1;
+
+  const xOf = t => PAD + ((t-minT)/rangeT)*chartW;
+  const yOf = v => PAD + chartH - ((v-minV)/rangeV)*chartH;
+
+  const drawSeries = (pts, color, fillOpacity, dashed=false) => {
+    if (!pts.length) return;
+    ctx.beginPath();
+    ctx.moveTo(xOf(pts[0].t), yOf(pts[0].v));
+    pts.forEach(p => ctx.lineTo(xOf(p.t), yOf(p.v)));
+    ctx.lineTo(xOf(pts[pts.length-1].t), PAD+chartH);
+    ctx.lineTo(xOf(pts[0].t), PAD+chartH);
+    ctx.closePath();
+    ctx.fillStyle = color.replace(")", `,${fillOpacity})`).replace("rgb","rgba");
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(xOf(pts[0].t), yOf(pts[0].v));
+    pts.forEach(p => ctx.lineTo(xOf(p.t), yOf(p.v)));
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    if (dashed) ctx.setLineDash([4,3]); else ctx.setLineDash([]);
+    ctx.stroke(); ctx.setLineDash([]);
+  };
+
+  if (n.length) drawSeries(n, "rgb(168,85,247)", 0.08, true);
+  if (g.length) drawSeries(g, "rgb(201,168,76)", 0.15);
+
+  // X axis
+  ctx.fillStyle="rgba(107,99,88,0.9)"; ctx.font="9px DM Sans,sans-serif"; ctx.textAlign="center";
+  const ref = g.length ? g : n;
+  const nL = Math.min(5, ref.length);
+  for (let i=0; i<nL; i++) {
+    const idx = Math.round(i/(nL-1)*(ref.length-1));
+    const p = ref[idx];
+    const label = new Date(p.t).toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit"});
+    ctx.fillText(label, xOf(p.t), H-3);
+  }
+
+  // Y axis
+  const fv = v => "$"+Number(v).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
+  ctx.fillStyle="rgba(107,99,88,0.7)"; ctx.font="9px DM Sans,sans-serif";
+  ctx.textAlign="right"; ctx.fillText(fv(maxV), W-PAD, PAD+10);
+  ctx.textAlign="left";  ctx.fillText(fv(minV), PAD, PAD+chartH-2);
+
+  canvas._cg = g; canvas._cn = n;
+  canvas._cb = {W,H,chartH,chartW,PAD,AXIS_H,minV,rangeV,minT,rangeT};
+
+  // Hover
+  const tip=document.getElementById("cd-tooltip"), cross=document.getElementById("cd-crosshair");
+  canvas.onmousemove = e => {
+    const b=canvas._cb; if(!b) return;
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left;
+    const nearest = arr => arr?.length ? arr.reduce((best,p)=>{
+      const px=b.PAD+((p.t-b.minT)/b.rangeT)*b.chartW;
+      return Math.abs(px-mx)<Math.abs((best?b.PAD+((best.t-b.minT)/b.rangeT)*b.chartW:999)-mx)?p:best;
+    },null) : null;
+    const gp=nearest(canvas._cg), np=nearest(canvas._cn);
+    const ref=gp??np; if(!ref) return;
+    const px=b.PAD+((ref.t-b.minT)/b.rangeT)*b.chartW;
+    const fmv = v=>"$"+Number(v).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+    document.getElementById("cd-val").innerHTML=
+      (gp?`<span style="color:#c9a84c">Bruto: ${fmv(gp.v)}</span>`:"")+(gp&&np?" · ":"")+
+      (np?`<span style="color:#a855f7">Neto: ${fmv(np.v)}</span>`:"");
+    document.getElementById("cd-ts").textContent=new Date(ref.t).toLocaleString("es-ES");
+    tip.style.left=(px+8>b.W-200?px-208:px+8)+"px";
+    tip.style.top="4px"; tip.style.opacity="1";
+    cross.style.left=px+"px"; cross.style.opacity="1";
+  };
+  canvas.onmouseleave=()=>{ tip.style.opacity="0"; cross.style.opacity="0"; };
+}
+
+// ── Pages ──────────────────────────────────────────────────────────────────────
+let _botStatus = null;
+let _currentBotView = "live";
+
+function setBotView(view, btn) {
+  _currentBotView = view;
+  document.querySelectorAll("#btn-show-live,#btn-show-paper,#btn-show-both").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  if (_botStatus) renderBotCurves(_botStatus);
+  // También actualizar KPIs de estado del bot según la vista seleccionada
+  if (window._lastLiveStatus) renderBotKPIs(window._lastLiveStatus, view);
+}
+
+function renderBotKPIs(ls, view) {
+  // Seleccionar datos del bot correcto según la vista
+  let s = ls;
+  if (ls && (ls.live !== undefined || ls.paper !== undefined)) {
+    if (view === "paper") s = ls.paper || ls.live || ls;
+    else if (view === "both") s = ls.live || ls; // both → mostrar live en KPIs
+    else s = ls.live || ls;
+  }
+  if (!s) return;
+  // Actualizar label de qué bot estamos viendo
+  const viewLabel = view === "paper" ? "📋 Paper" : view === "both" ? "📋+🎯 Ambos" : "🎯 Live";
+  const confLabel = document.getElementById("bot-confidence-label");
+  if (confLabel) confLabel.textContent = "CONFIANZA BOT " + (view === "paper" ? "PAPER" : "LIVE");
+
+  const conf = s.confidence?.score ?? s.confidence ?? null;
+  const confEl = document.getElementById("bot-confidence");
+  const confSub = document.getElementById("bot-confidence-sub");
+  if (confEl) {
+    if (conf !== null && conf !== undefined) {
+      confEl.textContent = conf+"/100";
+      confEl.style.color = conf>=70?"var(--green)":conf>=40?"var(--gold)":"var(--red)";
+      if (confSub) confSub.textContent = conf>=70?"✅ Alta confianza":conf>=40?"⚠️ Confianza media":"🛡 Reduciendo posiciones";
+    } else {
+      confEl.textContent = "—";
+      confEl.style.color = "var(--dim)";
+      if (confSub) confSub.textContent = "Esperando datos del bot...";
+    }
+  }
+
+  const dp = s.dailyPnlPct||0;
+  const mult = s.momentumMult||1;
+  const momEl = document.getElementById("bot-momentum");
+  const momSub = document.getElementById("bot-momentum-sub");
+  if (momEl) {
+    momEl.textContent = dp>=0?"+"+dp.toFixed(1)+"%":dp.toFixed(1)+"%";
+    momEl.style.color = clr(dp);
+    const multLabel = mult>=2?"🔥🔥 ×"+mult.toFixed(1):mult>=1.5?"🚀 ×"+mult.toFixed(1):mult<=0.7?"🛡 ×"+mult.toFixed(1):"×"+mult.toFixed(1);
+    momSub.textContent = multLabel+" tamaño posiciones";
+  }
+
+  const regime = s.marketRegime||"—";
+  const cp = s.cryptoPanic;
+  const alertPairs = cp?.defensivePairs||[];
+  const apEl = document.getElementById("bot-regime");
+  const apSub = document.getElementById("bot-regime-sub");
+  if (apEl) {
+    apEl.textContent = regime;
+    apEl.style.color = regime==="BULL"?"var(--green)":regime==="BEAR"?"var(--red)":"var(--gold)";
+    apSub.textContent = alertPairs.length ? "⚠️ "+alertPairs.map(p=>p.replace("USDT","")).join(", ")+" en alerta" : "Sin pares defensivos";
+  }
+
+  const cpEl = document.getElementById("bot-news");
+  const cpSub = document.getElementById("bot-news-sub");
+  if (cpEl) {
+    if (cp) {
+      cpEl.textContent = cp.globalDefensive ? "🚨 ALERTA" : "✅ Normal";
+      cpEl.style.color = cp.globalDefensive ? "var(--red)" : "var(--green)";
+      const lastCheck = cp.lastCheck ? new Date(cp.lastCheck).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}) : "—";
+      cpSub.textContent = "Último check: "+lastCheck;
+    } else {
+      cpEl.textContent = "— Estado noticias";
+      cpEl.style.color = "var(--dim)";
+      if (cpSub) cpSub.textContent = "Esperando datos...";
+    }
+  }
+}
+
+function renderBotCurves(bs) {
+  const liveEq  = bs?.live  || [];
+  const paperEq = bs?.paper || [];
+  const showLive  = _currentBotView==="live"  || _currentBotView==="both";
+  const showPaper = _currentBotView==="paper" || _currentBotView==="both";
+
+  drawEqCanvas(liveEq, paperEq, showLive, showPaper);
+
+  const lastLive  = liveEq.length  ? liveEq[liveEq.length-1].value??liveEq[liveEq.length-1].v   : null;
+  const lastPaper = paperEq.length ? paperEq[paperEq.length-1].value??paperEq[paperEq.length-1].v : null;
+  document.getElementById("live-equity-label").textContent  = lastLive  ? "Live: "+fUSD(lastLive)  : "Live: sin datos";
+  document.getElementById("paper-equity-label").textContent = lastPaper ? "Paper: "+fUSD(lastPaper) : "Paper: sin datos";
+  if (!window._eqResizeAdded) { window._eqResizeAdded=true; window.addEventListener("resize",()=>requestAnimationFrame(()=>renderBotCurves(_botStatus))); }
+}
+
+async function loadOverview(){
+  const [d, bs, ls] = await Promise.all([
+    api("GET","/api/admin/metrics"),
+    api("GET","/api/bot/status"),
+    api("GET","/api/bots/live-status"),
+  ]);
+  if(!d) return;
+  _botStatus = bs;
+
+  document.getElementById("ov-date").textContent=new Date().toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+
+  // Balance = clientes + gestor
+  document.getElementById("ov-balance").textContent = fUSD(d.balanceUSD||d.aumUSD);
+  const mc = d.managerCapital;
+  const mcDisplay = mc?.amount>0 ? ` (${fUSD(d.managerCapitalUSD)} tuyo + ${fUSD(d.aumUSD)} clientes)` : ` · Añade tu capital arriba`;
+  document.getElementById("ov-balance-sub").textContent = fEUR((d.balanceUSD||d.aumUSD)/d.fxRate)+" EUR"+mcDisplay+" · ✎ editar";
+
+  document.getElementById("ov-nc").textContent=d.nClients;
+  document.getElementById("ov-unalloc").textContent=`${(d.unallocatedPct||0).toFixed(0)}% sin asignar`;
+  document.getElementById("ov-dist").textContent=fUSD(d.totalDistNextUSD||0);
+
+  const all=d.periods?.find(p=>p.period==="ALL");
+  if(all){
+    const retEl=document.getElementById("ov-ret");
+    retEl.textContent=fP(all.pnlPct||0);
+    retEl.style.color=clr(all.pnlPct||0);
+    document.getElementById("ov-ret-abs").textContent=(all.pnlPct>=0?"+":"")+fUSD(all.pnl||0);
+    document.getElementById("ov-ret-abs").style.color=clr(all.pnl||0);
+  }
+
+  // ── KPIs del bot (confianza, momentum, régimen, noticias) ─────────────────
+  if (ls) {
+    window._lastLiveStatus = ls; // guardar para setBotView
+    renderBotKPIs(ls, _currentBotView);
+    // Store trades for marks on chart
+    const lsForTrades = (ls.live || ls);
+    _botStatus._recentTrades = lsForTrades.recentTrades||[];
+  }
+
+  renderBotCurves(bs);
+  renderPeriods("ov-prow","ov-pd",d.periods);
+  renderMonthly("ov-mg",d.monthly);
+}
+async function loadRiskLearning(){
+  const d = await api("GET","/api/bots/risk-learning");
+  if(!d) return;
+  const renderRL = (data, elId) => {
+    const el = document.getElementById(elId);
+    if(!el) return;
+    const stats = data.stats||{};
+    const params = data.params||{};
+    if(!Object.keys(stats).length){
+      el.innerHTML='<div style="color:var(--dim);font-size:11px;font-style:italic">Sin datos suficientes aún (mínimo 5 evaluaciones por regla)</div>';
+      return;
+    }
+    el.innerHTML = Object.entries(stats).map(([key,st])=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:11px;font-weight:500">${st.name}</div>
+          <div style="font-size:9px;color:var(--dim)">${st.n} evaluaciones · Δprecio prom: ${st.avgPriceDelta>0?"+":""}${st.avgPriceDelta}%</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;font-weight:700;color:${st.accuracy>=60?"var(--green)":st.accuracy>=40?"var(--gold)":"var(--red)"}">${st.accuracy}% acierto</div>
+          <div style="font-size:9px;color:var(--dim)">param actual: <b>${st.currentParam}</b></div>
+        </div>
+      </div>`).join("");
+  };
+  renderRL(d.live, "rl-live");
+  renderRL(d.paper, "rl-paper");
+}
+
+async function loadPerformance(){
+  const d=await api("GET","/api/admin/metrics"); if(!d)return;
+  document.getElementById("perf-kpis").innerHTML=["1D","1W","1M"].map(per=>{const p=d.periods?.find(x=>x.period===per)||{pnlPct:0,pnl:0};return`<div class="kpi"><div class="kl">${per}</div><div class="kv" style="color:${clr(p.pnlPct)}">${fP(p.pnlPct)}</div><div class="ks">${fUSD(p.pnl)}</div></div>`;}).join("");
+  document.querySelector("#perf-tbody").innerHTML=(d.monthly||[]).slice().reverse().map(m=>`<tr><td>${m.label}</td><td>${fUSD(m.start)}</td><td>${fUSD(m.end)}</td><td style="color:${clr(m.pnl)};font-weight:600">${fUSD(m.pnl)}</td><td style="color:${clr(m.pnlPct)};font-weight:600">${fP(m.pnlPct)}</td></tr>`).join("")||`<tr><td colspan="5" style="text-align:center;color:var(--dim);padding:16px">Sin datos</td></tr>`;
+}
+async function loadDistributions(){
+  const clients=await api("GET","/api/admin/clients"); if(!clients)return;
+  const all=[];
+  for(const c of clients.filter(c=>c.distributionEnabled)){
+    const m=await api("GET",`/api/admin/clients/${c.id}/metrics`); if(!m)continue;
+    const ds=m.distSchedule;
+    (ds.past||[]).forEach(p=>all.push({...p,clientName:c.name,clientId:c.id,config:ds.config}));
+    if(ds.next) all.push({...ds.next,clientName:c.name,clientId:c.id,future:true,config:ds.config});
+  }
+  const tbody=document.getElementById("dist-calendar-tbody");
+  tbody.innerHTML=all.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(item=>`<tr>
+    <td><strong>${item.clientName}</strong></td>
+    <td>${fD(item.date)}</td>
+    <td style="color:${item.future?"var(--purple)":"var(--text)"};font-weight:600">${fC(item.amtDisplay,item.currency)}</td>
+    <td style="color:var(--dim2);font-size:10px">${item.config?.baseType==="initial"?"Aport. inicial":"Valor actual"}</td>
+    <td style="color:var(--dim2);font-size:10px">${{monthly:"Mensual",quarterly:"Trimestral",annual:"Anual"}[item.config?.periodicity]||"—"}</td>
+    <td><span class="badge ${item.future?"b-purple":item.paid?"b-paid":"b-pending"}">${item.future?"PRÓXIMA":item.paid?"PAGADA":"PENDIENTE"}</span></td>
+    <td>${(!item.paid&&!item.future)?`<button class="btn btn-green" style="padding:3px 9px;font-size:10px" onclick="markPaid('${item.clientId}','${new Date(item.date).toISOString().slice(0,7)}')">✓ Marcar pagada</button>`:"—"}</td>
+  </tr>`).join("")||`<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:20px">Sin distribuciones configuradas</td></tr>`;
+
+  // Summary KPIs
+  const totalPending=all.filter(i=>!i.paid&&!i.future).reduce((s,i)=>s+i.amtUSD,0);
+  const totalPaid=all.filter(i=>i.paid).reduce((s,i)=>s+i.amtUSD,0);
+  const nextTotal=all.filter(i=>i.future).reduce((s,i)=>s+i.amtUSD,0);
+  document.getElementById("dist-summary").innerHTML=`
+    <div class="kpi"><div class="kl">Pendiente de pago</div><div class="kv red">${fUSD(totalPending)}</div><div class="ks">a pagar ahora</div></div>
+    <div class="kpi"><div class="kl">Total pagado</div><div class="kv green">${fUSD(totalPaid)}</div><div class="ks">histórico</div></div>
+    <div class="kpi"><div class="kl">Próximo ciclo</div><div class="kv purple">${fUSD(nextTotal)}</div><div class="ks">estimado</div></div>`;
+}
+async function loadClients(){
+  const[clients]=await Promise.all([api("GET","/api/admin/clients")]);
+  if(!clients)return;
+  document.getElementById("clients-tbody").innerHTML=clients.map(c=>`<tr>
+    <td><strong>${c.name}</strong><div style="font-size:10px;color:var(--dim2)">${c.email}</div></td>
+    <td><span class="badge ${c.currency==="EUR"?"b-eur":"b-gold"}">${c.currency}</span></td>
+    <td><span class="badge b-gold">${c.share||0}%</span></td>
+    <td>${fC(c.totalDepDisplay,c.currency)}</td>
+    <td style="color:var(--gold)">${fC(c.valueDisplay,c.currency)}</td>
+    <td style="color:${clr(c.pnlPct)};font-weight:600">${fP(c.pnlPct||0)}</td>
+    <td><span class="badge ${c.distributionEnabled?"b-on":"b-off"}">${c.distributionEnabled?"Activa":"No"}</span></td>
+    <td><span class="badge ${c.active?"b-on":"b-off"}">${c.active?"Activo":"Inactivo"}</span></td>
+    <td><button class="btn btn-outline" style="padding:3px 9px;font-size:10px" onclick="loadClientDetail('${c.id}')">Ver</button></td>
+  </tr>`).join("")||`<tr><td colspan="9" style="text-align:center;color:var(--dim);padding:20px">Sin clientes</td></tr>`;
+}
+
+async function loadClientDetail(clientId){
+  currentClientId=clientId;
+  const m=await api("GET",`/api/admin/clients/${clientId}/metrics`); if(!m)return;
+  showPage("client-detail");
+  const cur=m.client.currency;
+
+  document.getElementById("cd-name").textContent=m.client.name;
+  document.getElementById("cd-sub").textContent=`${m.client.email} · Desde ${fD(m.client.createdAt)} · ${cur}`;
+  document.getElementById("cd-val").textContent=fC(m.twr.currentValue,cur);
+  document.getElementById("cd-val-alt").textContent=`${fC(m.altValue,m.altCurrency)} ${m.altCurrency}`;
+  document.getElementById("cd-dep").textContent=fC(m.twr.totalDeposited,cur);
+  document.getElementById("cd-ndep").textContent=`${m.deposits.length} movimiento(s)`;
+
+  const pnlEl=document.getElementById("cd-pnl");
+  pnlEl.textContent=fC(m.twr.pnlAbs,cur); pnlEl.style.color=clr(m.twr.pnlAbs);
+  document.getElementById("cd-pnlpct").textContent=fP(m.twr.pnlPct);
+
+  const roiEl=document.getElementById("cd-roi");
+  roiEl.textContent=fP(m.twr.roiInitial||0); roiEl.style.color=clr(m.twr.roiInitial||0);
+  document.getElementById("cd-roi-sub").textContent=`vs aport. inicial ${fC(m.twr.firstDeposit,cur)}`;
+
+  // Participation ring
+  const share=m.client.share||0;
+  const circumference=2*Math.PI*35;
+  const dash=(share/100)*circumference;
+  document.getElementById("cd-part-ring").setAttribute("stroke-dasharray",`${dash} ${circumference}`);
+  document.getElementById("cd-part-pct").textContent=`${share}%`;
+  document.getElementById("cd-share-txt").textContent=`${share}% del fondo`;
+  document.getElementById("cd-first-dep").textContent=fC(m.twr.firstDeposit,cur);
+  document.getElementById("cd-dist-paid").textContent=fC(m.twr.totalDistPaid||0,cur);
+
+  // Distribución próxima
+  const ds=m.distSchedule;
+  const nextDistEl=document.getElementById("cd-next-dist");
+  if(ds&&ds.next&&m.client.distribution?.enabled){
+    nextDistEl.innerHTML=`
+      <div style="font-size:18px;font-weight:700;color:var(--purple)">${fC(ds.next.amtDisplay,ds.next.currency)}</div>
+      <div style="font-size:11px;color:var(--dim2);margin-top:4px">${fD(ds.next.date)} · ${ds.config.pct}% ${ds.config.baseType==="initial"?"de aport. inicial":"del valor actual"} · ${{monthly:"Mensual",quarterly:"Trimestral",annual:"Anual"}[ds.config.periodicity]||""}</div>`;
+  } else {
+    nextDistEl.innerHTML=`<div style="color:var(--dim);font-size:12px">Sin distribución configurada.<br><span style="color:var(--purple);cursor:pointer;font-size:11px" onclick="openDistConfig()">+ Configurar distribución</span></div>`;
+  }
+
+  // Timeline distribuciones
+  const tl=document.getElementById("cd-dist-timeline");
+  const past=(ds?.past||[]).slice().reverse();
+  if(!past.length&&!ds?.next){
+    tl.innerHTML=`<div style="color:var(--dim);font-size:11px;padding:8px">Sin distribuciones</div>`;
+  } else {
+    tl.innerHTML=past.map(p=>`
+      <div class="dist-item ${p.paid?"paid":"pending"}">
+        <div><div style="font-size:11px;font-weight:600">${fC(p.amtDisplay,p.currency)}</div><div style="font-size:9px;color:var(--dim2)">${fD(p.date)}</div></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="badge ${p.paid?"b-paid":"b-pending"}">${p.paid?"PAGADA":"PENDIENTE"}</span>
+          ${!p.paid?`<button class="btn btn-green" style="padding:2px 8px;font-size:9px" onclick="markPaid('${clientId}','${new Date(p.date).toISOString().slice(0,7)}')">✓</button>`:""}
+        </div>
+      </div>`).join("");
+  }
+
+  // Doble curva — canvas interactivo
+  const curves=m.curves;
+  if(curves){ drawClientCanvas(curves.withoutDist, curves.withDist); }
+
+  renderPeriods("cd-prow","cd-pd",m.periods);
+  renderMonthly("cd-mg",m.monthly,cur);
+
+  // Depósitos
+  const all=[...m.deposits.map(d=>({...d,tipo:"Depósito"})),...(m.withdrawals||[]).map(w=>({...w,amount:-w.amount,tipo:"Retirada"}))].sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  document.getElementById("cd-dep-tbody").innerHTML=all.map(d=>`<tr><td>${fD(d.ts)}</td><td><span class="badge ${d.tipo==="Depósito"?"b-on":"b-off"}">${d.tipo}</span></td><td style="color:${clr(d.amount)};font-weight:600">${fC(Math.abs(d.amount),d.currency)}</td><td><span class="badge ${d.currency==="EUR"?"b-eur":"b-gold"}">${d.currency}</span></td><td style="color:var(--dim2)">${d.note||"—"}</td><td>${d.tipo==="Depósito"?`<button class="btn btn-danger" style="padding:2px 7px;font-size:9px" onclick="removeDeposit('${d.id}')">✕</button>`:""}</td></tr>`).join("")||`<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:14px">Sin movimientos</td></tr>`;
+
+  document.getElementById("cd-url").textContent=window.location.origin;
+  document.getElementById("cd-id").textContent=clientId;
+}
+
+async function loadMovements(){
+  const clients=await api("GET","/api/admin/clients"); if(!clients)return;
+  const all=[];
+  for(const c of clients){const m=await api("GET",`/api/admin/clients/${c.id}/metrics`);if(!m)continue;m.deposits.forEach(d=>all.push({...d,cn:c.name,tipo:"Depósito"}));(m.withdrawals||[]).forEach(w=>all.push({...w,amount:-w.amount,cn:c.name,tipo:"Retirada"}));}
+  all.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  document.getElementById("mov-tbody").innerHTML=all.map(d=>`<tr><td>${fD(d.ts)}</td><td>${d.cn}</td><td><span class="badge ${d.tipo==="Depósito"?"b-on":"b-off"}">${d.tipo}</span></td><td style="color:${clr(d.amount)};font-weight:600">${fC(Math.abs(d.amount),d.currency)}</td><td><span class="badge ${d.currency==="EUR"?"b-eur":"b-gold"}">${d.currency}</span></td><td style="color:var(--dim2)">${d.note||"—"}</td></tr>`).join("")||`<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:20px">Sin movimientos</td></tr>`;
+}
+
+// ── Actions ──
+async function createClient(){
+  const name=document.getElementById("nc-name").value.trim(),email=document.getElementById("nc-email").value.trim(),pw=document.getElementById("nc-pw").value;
+  if(!name||!email||!pw){showMsg("nc-msg","Rellena campos obligatorios","var(--red)");return;}
+  const r=await api("POST","/api/admin/clients",{name,email,password:pw,currency:document.getElementById("nc-cur").value,phone:document.getElementById("nc-phone").value,notes:document.getElementById("nc-notes").value,depositMode:document.getElementById("nc-mode").value});
+  if(r?.id){closeModal("modal-new-client");showPage("clients");}else showMsg("nc-msg","Error","var(--red)");
+}
+
+let depTypeM="deposit";
+function openDepModal(type){
+  depTypeM=type;
+  document.getElementById("dep-mt").textContent=type==="deposit"?"Añadir depósito":"Registrar retirada";
+  document.getElementById("dep-submit").textContent=type==="deposit"?"Añadir":"Registrar";
+  document.getElementById("dep-date").value=new Date().toISOString().slice(0,10);
+  openModal("modal-deposit");
+}
+async function submitDeposit(){
+  const amount=+document.getElementById("dep-amount").value,currency=document.getElementById("dep-cur").value,ts=new Date(document.getElementById("dep-date").value).toISOString(),note=document.getElementById("dep-note").value;
+  if(!amount)return;
+  const url=depTypeM==="deposit"?`/api/admin/clients/${currentClientId}/deposits`:`/api/admin/clients/${currentClientId}/withdrawals`;
+  await api("POST",url,{amount,currency,ts,note});
+  closeModal("modal-deposit");loadClientDetail(currentClientId);
+}
+async function removeDeposit(id){if(!confirm("¿Eliminar?"))return;await api("DELETE",`/api/admin/clients/${currentClientId}/deposits/${id}`);loadClientDetail(currentClientId);}
+
+function openEditShare(){document.getElementById("es-share").value=document.getElementById("cd-share-txt").textContent.replace("%","").replace(" del fondo","");openModal("modal-edit-share");}
+async function saveShare(){await api("PUT",`/api/admin/clients/${currentClientId}`,{share:+document.getElementById("es-share").value,currency:document.getElementById("es-cur").value});closeModal("modal-edit-share");loadClientDetail(currentClientId);}
+
+function copyAccess(){navigator.clipboard.writeText(`URL: ${window.location.origin}\nID: ${currentClientId}`);alert("Copiado");}
+
+// Distribution config
+let distCfg={enabled:false,pct:0,baseType:"initial",periodicity:"monthly",currency:"USD"};
+async function openDistConfig(){
+  const m=await api("GET",`/api/admin/clients/${currentClientId}/metrics`); if(!m)return;
+  distCfg=m.client.distribution||{enabled:false,pct:0,baseType:"initial",periodicity:"monthly",currency:m.client.currency};
+  distEnabled=distCfg.enabled||false;
+  const tog=document.getElementById("dist-toggle");
+  tog.classList.toggle("on",distEnabled);
+  document.getElementById("dist-pct").value=distCfg.pct||"";
+  document.getElementById("dist-period").value=distCfg.periodicity||"monthly";
+  document.getElementById("dist-base").value=distCfg.baseType||"initial";
+  document.getElementById("dist-cur").value=distCfg.currency||"USD";
+  updateDistPreview(m.twr.firstDeposit,m.twr.currentValue,m.client.currency);
+  openModal("modal-dist-config");
+}
+function toggleDist(){distEnabled=!distEnabled;document.getElementById("dist-toggle").classList.toggle("on",distEnabled);}
+function updateDistPreview(firstDep,curVal,cur){
+  const pct=+document.getElementById("dist-pct").value||0;
+  const base=document.getElementById("dist-base").value;
+  const period=document.getElementById("dist-period").value;
+  const baseAmt=base==="initial"?firstDep:curVal;
+  const payment=baseAmt*(pct/100);
+  const periodLabel={monthly:"mes",quarterly:"trimestre",annual:"año"}[period]||"período";
+  document.getElementById("dist-preview").innerHTML=pct>0?`Pago estimado: <strong style="color:var(--purple)">${fC(payment,cur)}</strong> por ${periodLabel} (${pct}% de ${fC(baseAmt,cur)})`:"Define el porcentaje para ver la estimación.";
+}
+async function saveDist(){
+  const cfg={enabled:distEnabled,pct:+document.getElementById("dist-pct").value,baseType:document.getElementById("dist-base").value,periodicity:document.getElementById("dist-period").value,currency:document.getElementById("dist-cur").value};
+  await api("PUT",`/api/admin/clients/${currentClientId}/distribution`,cfg);
+  closeModal("modal-dist-config");loadClientDetail(currentClientId);
+}
+async function markPaid(clientId,periodDate){
+  await api("POST",`/api/admin/clients/${clientId}/distributions/pay`,{periodDate});
+  loadClientDetail(clientId);loadDistributions();
+}
+
+async function changeAdminPw(){
+  const pw=document.getElementById("new-pw").value,pw2=document.getElementById("new-pw2").value;
+  if(pw!==pw2){showMsg("pw-msg","No coinciden","var(--red)");return;}
+  await api("POST","/api/admin/password",{newPassword:pw});
+  showMsg("pw-msg","Cambiada correctamente","var(--green)");
+}
+
+// ── SEGURIDAD ─────────────────────────────────────────────────────────────────
+let _2faSetupSecret = "";
+
+async function loadSettings() {
+  // Estado 2FA
+  const status = await api("GET","/api/admin/2fa/setup");
+  render2FAStatus(status?.status);
+  // IPs
+  loadIPs();
+  // Audit log
+  loadAuditLog();
+  // Session countdown
+  startSessionCountdown();
+}
+
+function render2FAStatus(status) {
+  const el = document.getElementById("twofa-status");
+  if (!el) return;
+  if (status?.enabled) {
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="badge b-on">✅ ACTIVADO</span><span style="font-size:11px;color:var(--dim2)">Tu cuenta está protegida con 2FA</span></div>`;
+    document.getElementById("twofa-disable").style.display = "";
+    document.getElementById("twofa-setup").style.display   = "none";
+  } else {
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="badge b-off">❌ DESACTIVADO</span><span style="font-size:11px;color:var(--dim2)">Activa 2FA para mayor seguridad</span></div><button class="btn btn-gold" onclick="setup2FA()">Activar 2FA</button>`;
+    document.getElementById("twofa-disable").style.display = "none";
+  }
+}
+
+async function setup2FA() {
+  const d = await api("GET","/api/admin/2fa/setup");
+  if (!d) return;
+  _2faSetupSecret = d.secret;
+  document.getElementById("twofa-qr").src = d.qrUrl;
+  document.getElementById("twofa-secret").textContent = d.secret;
+  document.getElementById("twofa-setup").style.display = "";
+  document.getElementById("twofa-status").innerHTML = "";
+}
+
+async function confirm2FA() {
+  const code = document.getElementById("twofa-code").value.trim();
+  if (!code) return;
+  const r = await api("POST","/api/admin/2fa/enable",{secret:_2faSetupSecret, code});
+  if (r?.ok) {
+    showMsg("twofa-msg","✅ 2FA activado. Guarda tu app de autenticación.","var(--green)");
+    setTimeout(()=>loadSettings(),2000);
+  } else {
+    showMsg("twofa-msg","Código incorrecto. Inténtalo de nuevo.","var(--red)");
+  }
+}
+
+function cancel2FASetup() {
+  document.getElementById("twofa-setup").style.display="none";
+  loadSettings();
+}
+
+async function disable2FA() {
+  const code = document.getElementById("twofa-disable-code").value.trim();
+  if (!code) return;
+  const r = await api("POST","/api/admin/2fa/disable",{code});
+  if (r?.ok) loadSettings();
+  else showMsg("twofa-msg","Código incorrecto","var(--red)");
+}
+
+async function loadIPs() {
+  const ips = await api("GET","/api/admin/security/ips");
+  const el  = document.getElementById("ip-list");
+  if (!el) return;
+  if (!ips?.length) { el.innerHTML=`<div style="font-size:11px;color:var(--dim);margin-bottom:8px">Sin restricción de IP — cualquier IP puede acceder</div>`; return; }
+  el.innerHTML = ips.map(e=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px">
+    <span style="color:var(--text)">${e.ip}</span>
+    <span style="color:var(--dim2)">${e.label||""}</span>
+    <button class="btn btn-danger" style="padding:2px 8px;font-size:9px" onclick="removeIP('${e.ip}')">✕</button>
+  </div>`).join("");
+}
+
+async function addMyIP() {
+  const d = await api("GET","/api/admin/security/myip");
+  if (d?.ip) document.getElementById("ip-input").value = d.ip;
+}
+
+async function addIP() {
+  const ip=document.getElementById("ip-input").value.trim();
+  const label=document.getElementById("ip-label").value.trim();
+  if (!ip) return;
+  await api("POST","/api/admin/security/ips",{ip,label});
+  document.getElementById("ip-input").value="";
+  document.getElementById("ip-label").value="";
+  loadIPs();
+}
+
+async function removeIP(ip) {
+  if (!confirm(`¿Eliminar la IP ${ip}?`)) return;
+  await api("DELETE",`/api/admin/security/ips/${encodeURIComponent(ip)}`);
+  loadIPs();
+}
+
+async function loadAuditLog() {
+  const logs = await api("GET","/api/admin/audit?n=50");
+  const el   = document.getElementById("audit-log");
+  if (!el || !logs?.length) return;
+  const colors = { LOGIN_OK:"var(--green)", LOGIN_FAIL:"var(--red)", "2FA_FAIL":"var(--red)", LOGIN_OK_2FA:"var(--green)", SECURITY:"var(--red)", IP_BLOCKED:"var(--red)", ACTION:"var(--dim2)", API_ACCESS:"var(--dim)", DEFAULT:"var(--dim2)" };
+  el.innerHTML = logs.map(l=>{
+    const c = colors[l.type]||colors.DEFAULT;
+    const ts = new Date(l.ts).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    return `<div style="padding:3px 0;border-bottom:1px solid var(--border);display:flex;gap:8px"><span style="color:var(--dim)">${ts}</span><span style="color:${c}">${l.type}</span><span style="color:var(--dim2)">${l.path||""}</span><span style="color:var(--dim)">${l.ip||""}</span></div>`;
+  }).join("");
+}
+
+// Session countdown
+let sessionTimer = null;
+async function startSessionCountdown() {
+  if (sessionTimer) clearInterval(sessionTimer);
+  sessionTimer = setInterval(async () => {
+    const me = await api("GET","/api/auth/me");
+    if (!me) return;
+    if (me.warnExpiry) {
+      const mins = Math.floor(me.expiresInMs / 60000);
+      const secs = Math.floor((me.expiresInMs % 60000) / 1000);
+      document.getElementById("session-warning").style.display = "flex";
+      document.getElementById("session-countdown").textContent = `${mins}:${String(secs).padStart(2,"0")}`;
+    } else {
+      document.getElementById("session-warning").style.display = "none";
+    }
+  }, 30000);
+}
+
+async function renewSession() {
+  await api("POST","/api/auth/renew");
+  document.getElementById("session-warning").style.display = "none";
+}
+
+function openModal(id){document.getElementById(id).classList.add("open");}
+function closeModal(id){document.getElementById(id).classList.remove("open");}
+function showMsg(id,msg,color){const el=document.getElementById(id);if(el){el.textContent=msg;el.style.color=color;el.style.display="block";}}
+
+async function saveAlertConfig(){
+  const cfg={
+    winPct:+document.getElementById("alert-win").value||3,
+    lossPct:+document.getElementById("alert-loss").value||3,
+    paperWinPct:+document.getElementById("alert-paper-win").value||5,
+    paperLossPct:+document.getElementById("alert-paper-loss").value||4,
+  };
+  const r=await api("POST","/api/admin/alert-config",cfg);
+  if(r&&r.ok) showToast("✅ Alertas guardadas","success");
+  else showToast("Error guardando alertas","error");
+}
+
+async function loadAlertConfig(){
+  const r=await api("GET","/api/admin/alert-config");
+  if(!r) return;
+  if(document.getElementById("alert-win")) document.getElementById("alert-win").value=r.winPct||3;
+  if(document.getElementById("alert-loss")) document.getElementById("alert-loss").value=r.lossPct||3;
+  if(document.getElementById("alert-paper-win")) document.getElementById("alert-paper-win").value=r.paperWinPct||5;
+  if(document.getElementById("alert-paper-loss")) document.getElementById("alert-paper-loss").value=r.paperLossPct||4;
+}
+
+async function saveManagerCapital(){
+  const amount=+document.getElementById("mc-amount").value;
+  const currency=document.getElementById("mc-currency").value;
+  const note=document.getElementById("mc-note").value;
+  if(!amount||amount<=0){showToast("Introduce un importe válido","error");return;}
+
+  const btn=document.querySelector("#modal-manager-capital .btn-gold");
+  if(btn){btn.textContent="Verificando...";btn.disabled=true;}
+  try {
+    // Usar api() que maneja auth correctamente
+    const r = await api("POST","/api/admin/manager-capital",{amount,currency,note});
+    if(r && r.ok){
+      const infoEl=document.getElementById("mc-balance-info");
+      if(infoEl) infoEl.remove();
+      closeModal("modal-manager-capital");
+      showToast("✅ Capital aportado: "+amount.toLocaleString("es-ES")+" "+currency,"success");
+      loadOverview();
+    } else if(r && r.error){
+      showToast("❌ "+r.error,"error");
+      if(r.realBalance!==undefined){
+        const info=document.getElementById("mc-balance-info")||document.createElement("div");
+        info.id="mc-balance-info";
+        info.style.cssText="color:#c0392b;font-size:11px;margin-top:8px;padding:8px;background:rgba(192,57,43,0.1);border-radius:4px;";
+        info.innerHTML="Balance en Binance: <b>$"+r.realBalance+"</b> · Declaras: <b>$"+r.required+"</b><br>Añade más USDC a Binance primero.";
+        document.getElementById("mc-note").parentNode.appendChild(info);
+      }
+    } else {
+      showToast("Error al guardar capital","error");
+    }
+  } catch(e){
+    showToast("Error de conexión: "+e.message,"error");
+  } finally {
+    if(btn){btn.textContent="Guardar";btn.disabled=false;}
+  }
+}
+
+function showToast(msg, type="info"){
+  const t=document.createElement("div");
+  const colors={success:"#1a7a4a",error:"#c0392b",info:"#c9a84c"};
+  t.style.cssText=`position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:6px;background:${colors[type]||colors.info};color:#fff;font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:opacity .3s;max-width:320px;`;
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity="0";setTimeout(()=>t.remove(),400);},3500);
+}
+
+if(!token)window.location.href="/";
+else loadOverview();
+</script>
+
+<!-- Modal capital gestor -->
+<div class="modal-overlay" id="modal-manager-capital">  <div class="modal" style="max-width:400px">
+    <div class="mt">💼 Capital aportado al fondo</div>
+    <button class="mc-btn" onclick="closeModal('modal-manager-capital')">✕</button>
+    <div style="font-size:12px;color:var(--dim2);margin-bottom:14px">Capital nuevo que aportas al fondo. Registra aquí cada nueva aportación. Esto permite calcular tu rendimiento personal separado del de tus clientes.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px">
+      <div class="field"><label>Tu capital</label><input id="mc-amount" type="number" min="0" placeholder="ej. 5000"></div>
+      <div class="field"><label>Moneda</label><select id="mc-currency"><option value="EUR">EUR</option><option value="USD">USD</option></select></div>
+    </div>
+    <div class="field" style="margin-bottom:14px"><label>Nota</label><input id="mc-note" placeholder="ej. Capital inicial propio"></div>
+    <div style="display:flex;gap:7px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('modal-manager-capital')">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveManagerCapital()">Guardar</button>
+    </div>
+  </div>
+</div>
+<!-- ══ MODAL: Distribución de ingreso Binance ═══════════════════════════════ -->
+<div class="modal-overlay" id="modal-deposit-dist" style="z-index:300">
+  <div class="modal" style="max-width:600px">
+    <div class="mt">💰 Nuevo ingreso detectado en Binance</div>
+    <button class="mc-btn" onclick="closeModal('modal-deposit-dist')">✕</button>
+
+    <div id="dep-info" style="background:var(--bg2);border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="color:var(--dim2)">Cantidad detectada</span>
+        <span id="dep-amount-label" style="font-size:18px;font-weight:700;color:var(--green)">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <span style="color:var(--dim2);font-size:11px">TxID</span>
+        <span id="dep-txid" style="font-size:11px;color:var(--dim);font-family:monospace">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="color:var(--dim2);font-size:11px">Pendiente de distribuir</span>
+        <span id="dep-remaining" style="font-size:12px;font-weight:600;color:var(--gold)">—</span>
+      </div>
+    </div>
+
+    <div style="font-size:11px;color:var(--dim2);margin-bottom:10px;letter-spacing:.04em;text-transform:uppercase">Distribución</div>
+
+    <div id="dep-dist-rows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <!-- filas generadas dinámicamente -->
+    </div>
+
+    <button class="btn btn-outline" onclick="addDepDistRow()" style="width:100%;margin-bottom:14px;font-size:12px">+ Añadir destinatario</button>
+
+    <div id="dep-dist-summary" style="background:var(--bg2);border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+      <span style="color:var(--dim2)">Total asignado</span>
+      <span id="dep-total-assigned" style="font-weight:700">$0.00</span>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="skipDeposit()">Ignorar</button>
+      <button class="btn btn-gold" onclick="confirmDistribution()">Confirmar distribución</button>
+    </div>
+
+    <div id="dep-dist-msg" style="margin-top:10px;font-size:12px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- ══ BOTÓN MANUAL: Registrar ingreso sin detección automática ═════════════ -->
+<style>
+#deposit-alert-badge{
+  position:fixed;bottom:24px;right:24px;z-index:250;
+  background:var(--green);color:#fff;border-radius:50px;
+  padding:10px 18px;font-size:13px;font-weight:600;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);cursor:pointer;
+  display:none;align-items:center;gap:8px;
+  animation:pulse-badge 2s infinite;
+}
+@keyframes pulse-badge{0%,100%{transform:scale(1);box-shadow:0 4px 20px rgba(26,122,74,.4)}50%{transform:scale(1.04);box-shadow:0 6px 28px rgba(26,122,74,.6)}}
+.dep-row{display:grid;grid-template-columns:1fr 120px 28px;gap:8px;align-items:center}
+.dep-row select,.dep-row input{padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:12px;font-family:inherit}
+.dep-row input[type=number]{text-align:right}
+.dep-row button{background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;line-height:1}
+</style>
+
+<div id="deposit-alert-badge" onclick="openPendingDeposit()">
+  💰 <span id="dep-badge-count">1</span> ingreso pendiente
+</div>
+
+<script>
+// ── Estado depósitos ──────────────────────────────────────────────────────────
+let pendingDeposits = [];
+let currentDepositId = null;
+
+// ── Cargar pendientes del servidor al abrir la página ─────────────────────────
+async function loadPendingDeposits() {
+  try {
+    const r = await apiFetch("/api/admin/deposits/pending");
+    if (r.pending?.length) {
+      pendingDeposits = r.pending;
+      showDepositBadge();
+      // Abrir popup automáticamente si hay pendientes
+      const next = pendingDeposits.find(d => !d.distributed);
+      if (next && !document.getElementById("modal-deposit-dist").classList.contains("open")) {
+        openDepositModal(next);
+      }
+    }
+  } catch {}
+}
+
+// ── WebSocket para notificaciones en tiempo real ──────────────────────────────
+(function initDepositWS() {
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  const ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === "new_deposit") {
+        // Evitar duplicados
+        if (!pendingDeposits.find(d => d.id === msg.deposit.id)) {
+          pendingDeposits.push(msg.deposit);
+        }
+        showDepositBadge();
+        if (!document.getElementById("modal-deposit-dist").classList.contains("open")) {
+          openDepositModal(msg.deposit);
+        }
+      }
+    } catch {}
+  };
+  ws.onclose = () => setTimeout(initDepositWS, 5000);
+  ws.onerror = () => {};
+})();
+
+// Cargar al inicio (tras que el DOM esté listo y la sesión activa)
+window.addEventListener("load", () => setTimeout(loadPendingDeposits, 1500));
+
+function showDepositBadge() {
+  const badge = document.getElementById("deposit-alert-badge");
+  const count = document.getElementById("dep-badge-count");
+  const n = pendingDeposits.filter(d => !d.distributed).length;
+  if (n > 0) { count.textContent = n; badge.style.display = "flex"; }
+  else badge.style.display = "none";
+}
+
+function openPendingDeposit() {
+  const next = pendingDeposits.find(d => !d.distributed);
+  if (next) openDepositModal(next);
+}
+
+function openDepositModal(dep) {
+  currentDepositId = dep.id;
+  const amountUSD = dep.amountUSD || dep.amount;
+
+  document.getElementById("dep-amount-label").textContent =
+    `${dep.amount} ${dep.asset} ≈ $${parseFloat(amountUSD).toFixed(2)}`;
+  document.getElementById("dep-txid").textContent = dep.txId || "—";
+  document.getElementById("dep-remaining").textContent = `$${parseFloat(amountUSD).toFixed(2)} por asignar`;
+
+  // Limpiar filas y mensaje
+  document.getElementById("dep-dist-rows").innerHTML = "";
+  document.getElementById("dep-dist-msg").textContent = "";
+
+  // Fila inicial: todo al admin
+  addDepDistRow("admin", parseFloat(amountUSD));
+  updateDepTotal();
+
+  document.getElementById("modal-deposit-dist").classList.add("open");
+}
+
+function getClients() {
+  return window._clientsCache || [];
+}
+
+function addDepDistRow(targetVal = "", amountVal = "") {
+  const row = document.createElement("div");
+  row.className = "dep-row";
+
+  const sel = document.createElement("select");
+  sel.innerHTML = `<option value="admin">👤 Yo (admin)</option>` +
+    getClients().map(c => `<option value="${c.id}">${c.name}</option>`).join("") +
+    `<option value="__new__">➕ Nuevo cliente…</option>`;
+  if (targetVal) sel.value = targetVal;
+  sel.onchange = () => {
+    if (sel.value === "__new__") {
+      closeModal("modal-deposit-dist");
+      openModal("modal-new-client");
+    }
+  };
+
+  const inp = document.createElement("input");
+  inp.type = "number"; inp.min = "0"; inp.step = "0.01";
+  inp.placeholder = "USD";
+  if (amountVal) inp.value = parseFloat(amountVal).toFixed(2);
+  inp.oninput = updateDepTotal;
+
+  const btn = document.createElement("button");
+  btn.textContent = "✕";
+  btn.onclick = () => { row.remove(); updateDepTotal(); };
+
+  row.appendChild(sel); row.appendChild(inp); row.appendChild(btn);
+  document.getElementById("dep-dist-rows").appendChild(row);
+}
+
+function updateDepTotal() {
+  const dep = pendingDeposits.find(d => d.id === currentDepositId);
+  const total = dep ? parseFloat(dep.amountUSD || dep.amount) : 0;
+  let assigned = 0;
+  document.querySelectorAll("#dep-dist-rows .dep-row input").forEach(i => {
+    assigned += parseFloat(i.value) || 0;
+  });
+  const el = document.getElementById("dep-total-assigned");
+  el.textContent = `$${assigned.toFixed(2)} / $${total.toFixed(2)}`;
+  el.style.color = Math.abs(assigned - total) < 0.02 ? "var(--green)" : "var(--gold)";
+  document.getElementById("dep-remaining").textContent =
+    `$${Math.max(0, total - assigned).toFixed(2)} por asignar`;
+}
+
+async function confirmDistribution() {
+  const msgEl = document.getElementById("dep-dist-msg");
+  const distribution = [];
+  let hasError = false;
+  document.querySelectorAll("#dep-dist-rows .dep-row").forEach(row => {
+    const sel = row.querySelector("select");
+    const inp = row.querySelector("input");
+    const amt = parseFloat(inp?.value);
+    if (!amt || amt <= 0) { hasError = true; return; }
+    distribution.push({ target: sel.value, amountUSD: amt });
+  });
+  if (hasError || !distribution.length) {
+    msgEl.textContent = "Revisa los importes — todos deben ser > 0.";
+    msgEl.style.color = "var(--red)"; return;
+  }
+
+  try {
+    const r = await apiFetch("/api/admin/deposits/distribute", "POST", {
+      depositId: currentDepositId, distribution
+    });
+    if (r.ok) {
+      // Marcar como distribuido localmente
+      const dep = pendingDeposits.find(d => d.id === currentDepositId);
+      if (dep) dep.distributed = true;
+      showDepositBadge();
+      closeModal("modal-deposit-dist");
+      if (typeof loadOverview === "function") loadOverview();
+      // Abrir siguiente pendiente si hay
+      setTimeout(() => {
+        const next = pendingDeposits.find(d => !d.distributed);
+        if (next) openDepositModal(next);
+      }, 600);
+    } else {
+      msgEl.textContent = r.error || "Error al distribuir";
+      msgEl.style.color = "var(--red)";
+    }
+  } catch(e) {
+    msgEl.textContent = "Error de conexión";
+    msgEl.style.color = "var(--red)";
+  }
+}
+
+async function skipDeposit() {
+  // No marca como distribuido — seguirá apareciendo al recargar
+  closeModal("modal-deposit-dist");
+  // Mover al siguiente si hay más pendientes
+  const remaining = pendingDeposits.filter(d => !d.distributed && d.id !== currentDepositId);
+  if (remaining.length) {
+    setTimeout(() => openDepositModal(remaining[0]), 400);
+  }
+}
+
+// Cachear clientes cuando se carguen en el panel
+const _origSetClients = window.setClients;
+async function _cacheClients() {
+  try {
+    const r = await apiFetch("/api/admin/clients");
+    window._clientsCache = (r.clients || r || []).filter(c => c.active !== false);
+  } catch {}
+}
+window.addEventListener("load", () => setTimeout(_cacheClients, 800));
+
+// Auto-refresh cada 60s — detecta cambios de capital y actualiza overview
+let _lastBalance = null;
+setInterval(async () => {
+  if (typeof _isLoggedIn !== "undefined" && !_isLoggedIn) return;
+  try {
+    const d = await api("GET", "/api/admin/metrics");
+    if (!d) return;
+    const cur = d.balanceUSD || 0;
+    if (_lastBalance !== null && cur > _lastBalance + 1) {
+      if (typeof showToast === "function")
+        showToast("💰 Capital actualizado: +" + (cur - _lastBalance).toFixed(2) + " USD", "success");
+      if (typeof loadOverview === "function") loadOverview();
+    }
+    _lastBalance = cur;
+  } catch(e) {}
+}, 60000);
+
+</script>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BAFIR TRADING — Acceso</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f2ee;--card:#ffffff;--text:#1a1a1a;--dim:#8a8a8a;
+  --gold:#c9a84c;--gold2:#e8c97a;--dark:#0f0f0f;--border:#e0dbd2;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  background-image:radial-gradient(circle at 20% 50%, #e8e0d0 0%, transparent 60%),
+                   radial-gradient(circle at 80% 20%, #ddd5c5 0%, transparent 50%)}
+
+.container{width:100%;max-width:420px;padding:20px}
+
+.logo{text-align:center;margin-bottom:40px}
+.logo-mark{width:56px;height:56px;background:var(--dark);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 16px;
+  box-shadow:0 8px 32px rgba(0,0,0,.15)}
+.logo-mark span{color:var(--gold);font-family:'Playfair Display',serif;font-size:22px;font-weight:900}
+.logo h1{font-family:'Playfair Display',serif;font-size:26px;color:var(--dark);letter-spacing:.02em}
+.logo p{font-size:12px;color:var(--dim);margin-top:4px;letter-spacing:.08em;text-transform:uppercase}
+
+.card{background:var(--card);border-radius:16px;padding:32px;
+  box-shadow:0 4px 40px rgba(0,0,0,.08);border:1px solid var(--border)}
+
+.tabs{display:flex;gap:0;margin-bottom:28px;background:#f0ece6;border-radius:8px;padding:3px}
+.tab{flex:1;padding:8px;border:none;background:transparent;border-radius:6px;
+  font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;
+  color:var(--dim);transition:all .2s;letter-spacing:.04em}
+.tab.active{background:white;color:var(--dark);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+
+.field{margin-bottom:18px}
+.field label{display:block;font-size:11px;font-weight:500;color:var(--dim);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.field input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;
+  font-size:14px;font-family:'DM Sans',sans-serif;background:white;color:var(--text);
+  transition:border-color .2s;outline:none}
+.field input:focus{border-color:var(--gold)}
+
+.btn-submit{width:100%;padding:13px;background:var(--dark);color:white;border:none;
+  border-radius:9px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;
+  letter-spacing:.04em;transition:all .2s;margin-top:4px}
+.btn-submit:hover{background:#2a2a2a;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+
+.error{background:#fff0f0;border:1px solid #ffd0d0;color:#c0392b;border-radius:7px;
+  padding:10px 14px;font-size:12px;margin-bottom:16px;display:none}
+.error.show{display:block}
+
+.footer{text-align:center;margin-top:20px;font-size:11px;color:var(--dim)}
+.footer a{color:var(--gold);text-decoration:none}
+
+/* Animación entrada */
+.container{animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <svg viewBox="0 0 120 32" style="height:28px" xmlns="http://www.w3.org/2000/svg"><text x="0" y="24" font-family="Georgia,serif" font-size="26" font-weight="700" fill="#b8942a" letter-spacing="2">BAFIR</text></svg> <span style="display:none" alt="BAFIR" style="width:160px;display:block;margin:0 auto 8px" onerror="this.style.display='none'">
+    <h1>BAFIR TRADING</h1>
+    <p>Gestión de activos digitales</p>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('admin')">Gestor</button>
+      <button class="tab" onclick="switchTab('client')">Cliente</button>
+    </div>
+
+    <div id="error-msg" class="error"></div>
+
+    <!-- ADMIN LOGIN -->
+    <div id="form-admin">
+      <div class="field">
+        <label>Contraseña de acceso</label>
+        <input type="password" id="admin-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginAdmin()">
+      </div>
+      <button class="btn-submit" onclick="loginAdmin()">Acceder como gestor →</button>
+    </div>
+
+    <!-- 2FA -->
+    <div id="form-2fa" style="display:none">
+      <div style="text-align:center;margin-bottom:16px;font-size:13px;color:var(--dim2)">
+        🔐 Abre Google Authenticator e introduce el código de 6 dígitos
+      </div>
+      <div class="field">
+        <label>Código de verificación</label>
+        <input type="text" id="totp-code" placeholder="123456" maxlength="6" inputmode="numeric"
+          style="font-size:24px;letter-spacing:8px;text-align:center"
+          onkeydown="if(event.key==='Enter')verify2FA()">
+      </div>
+      <button class="btn-submit" onclick="verify2FA()">Verificar →</button>
+      <button onclick="document.getElementById('form-admin').style.display='';document.getElementById('form-2fa').style.display='none'" style="width:100%;margin-top:8px;padding:8px;border:none;background:transparent;color:var(--dim);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px">← Volver</button>
+    </div>
+
+    <!-- CLIENT LOGIN -->
+    <div id="form-client" style="display:none">
+      <div class="field">
+        <label>ID de cliente</label>
+        <input type="text" id="client-id" placeholder="Tu identificador único" onkeydown="if(event.key==='Enter')loginClient()">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="client-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginClient()">
+      </div>
+      <button class="btn-submit" onclick="loginClient()">Ver mi cartera →</button>
+    </div>
+  </div>
+
+  <div class="footer">BAFIR TRADING © 2024 &nbsp;·&nbsp; <a href="mailto:info@bafir.es">info@bafir.es</a></div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll(".tab").forEach((t,i) => t.classList.toggle("active", (i===0&&tab==="admin")||(i===1&&tab==="client")));
+  document.getElementById("form-admin").style.display  = tab==="admin"  ? "" : "none";
+  document.getElementById("form-client").style.display = tab==="client" ? "" : "none";
+  document.getElementById("error-msg").classList.remove("show");
+}
+
+function showError(msg) {
+  const el = document.getElementById("error-msg");
+  el.textContent = msg; el.classList.add("show");
+}
+
+async function loginAdmin() {
+  const pw = document.getElementById("admin-pw").value;
+  if (!pw) return showError("Introduce la contraseña");
+  try {
+    const r = await fetch("/api/auth/admin", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({password:pw}) });
+    const d = await r.json();
+    if (!r.ok) return showError(d.error || "Error de acceso");
+
+    // ¿Requiere 2FA?
+    if (d.require2FA) {
+      document.getElementById("form-admin").style.display = "none";
+      document.getElementById("form-2fa").style.display  = "";
+      window._tempToken = d.tempToken;
+      return;
+    }
+
+    localStorage.setItem("bafir_token", d.token);
+    localStorage.setItem("bafir_role",  d.role);
+    window.location.href = "/admin";
+  } catch(e) { showError("Error de conexión"); }
+}
+
+async function verify2FA() {
+  const code = document.getElementById("totp-code").value.trim();
+  if (!code) return showError("Introduce el código");
+  try {
+    const r = await fetch("/api/auth/admin/2fa", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({tempToken:window._tempToken, code}) });
+    const d = await r.json();
+    if (!r.ok) return showError(d.error || "Código incorrecto");
+    localStorage.setItem("bafir_token", d.token);
+    localStorage.setItem("bafir_role",  d.role);
+    window.location.href = "/admin";
+  } catch(e) { showError("Error de conexión"); }
+}
+
+async function loginClient() {
+  const clientId = document.getElementById("client-id").value.trim();
+  const pw       = document.getElementById("client-pw").value;
+  if (!clientId || !pw) return showError("Rellena todos los campos");
+  try {
+    const r = await fetch("/api/auth/client", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({clientId,password:pw}) });
+    const d = await r.json();
+    if (!r.ok) return showError(d.error || "Credenciales incorrectas");
+    localStorage.setItem("bafir_token",    d.token);
+    localStorage.setItem("bafir_role",     d.role);
+    localStorage.setItem("bafir_clientId", d.clientId);
+    window.location.href = "/client";
+  } catch(e) { showError("Error de conexión"); }
+}
+
+// Redirigir si ya tiene sesión
+const token = localStorage.getItem("bafir_token");
+const role  = localStorage.getItem("bafir_role");
+if (token) {
+  fetch("/api/auth/me", { headers:{"Authorization":"Bearer "+token} })
+    .then(r => { if(r.ok&&role==="admin") window.location.href="/admin"; else if(r.ok&&role==="client") window.location.href="/client"; })
+    .catch(()=>{});
+}
+</script>
+</body>
+</html>

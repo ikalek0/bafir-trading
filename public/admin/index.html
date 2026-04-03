@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BAFIR Trading</title>
+<link rel="icon" href="/bafir_favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080b10;
+  --bg2:#0d1117;
+  --card:#10151e;
+  --card2:#141a24;
+  --border:#1c2438;
+  --border2:#243048;
+  --text:#e4eaf4;
+  --dim:#4a607a;
+  --dim2:#7a90a8;
+  --gold:#c9a84c;
+  --gold2:#e8c97a;
+  --gold3:#f5dfa0;
+  --green:#00d97e;
+  --red:#ff4d6a;
+  --blue:#3b82f6;
+  --purple:#a855f7;
+  --glow:rgba(201,168,76,0.08);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:"DM Sans",sans-serif;font-size:14px;overflow-x:hidden}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:32px}
+.login-logo{height:44px;opacity:0.92}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:36px;width:340px;display:flex;flex-direction:column;gap:16px}
+.login-box h2{font-family:"Playfair Display",serif;font-size:18px;font-weight:600;color:var(--gold);text-align:center;letter-spacing:0.04em}
+.login-box input{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:6px;font-size:13px;font-family:"DM Sans",sans-serif;width:100%;transition:border .2s}
+.login-box input:focus{outline:none;border-color:var(--gold)}
+.btn-login{background:var(--gold);color:#000;border:none;padding:11px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;letter-spacing:0.05em;transition:background .2s}
+.btn-login:hover{background:var(--gold2)}
+.login-err{color:var(--red);font-size:12px;text-align:center;min-height:16px}
+
+/* ── LAYOUT ── */
+#app{display:none;height:100vh;display:flex}
+#app.visible{display:flex}
+#sidebar{width:220px;min-width:220px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0;transition:width .25s}
+#sidebar.collapsed{width:64px;min-width:64px}
+.sb-logo{padding:20px 16px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.sb-logo img{height:28px;flex-shrink:0}
+.sb-logo-text{font-family:"Playfair Display",serif;font-size:15px;color:var(--gold);white-space:nowrap;overflow:hidden}
+#sidebar.collapsed .sb-logo-text{display:none}
+.sb-nav{flex:1;padding:12px 0;overflow-y:auto}
+.ni{display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;border-radius:0;transition:background .15s;color:var(--dim2);font-size:13px;font-weight:500;border:none;background:none;width:100%;text-align:left;white-space:nowrap;overflow:hidden;position:relative}
+.ni:hover{background:rgba(201,168,76,0.06);color:var(--text)}
+.ni.active{background:rgba(201,168,76,0.1);color:var(--gold)}
+.ni.active::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);border-radius:0 2px 2px 0}
+.ni-icon{font-size:16px;flex-shrink:0;width:20px;text-align:center}
+.ni-label{font-size:12px;overflow:hidden;text-overflow:ellipsis}
+#sidebar.collapsed .ni-label{display:none}
+.sb-bottom{padding:12px 0;border-top:1px solid var(--border)}
+.sb-toggle{display:flex;align-items:center;gap:8px;padding:10px 16px;cursor:pointer;color:var(--dim);font-size:12px;background:none;border:none;width:100%;transition:color .15s}
+.sb-toggle:hover{color:var(--text)}
+#main{flex:1;overflow-y:auto;background:var(--bg)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:50}
+.topbar-title{font-family:"Playfair Display",serif;font-size:17px;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.session-badge{font-size:11px;color:var(--dim2);background:var(--card);padding:4px 10px;border-radius:20px;border:1px solid var(--border)}
+.btn-logout{background:none;border:1px solid var(--border);color:var(--dim2);padding:5px 12px;border-radius:4px;font-size:11px;cursor:pointer;transition:all .15s}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+.page{display:none;padding:24px;max-width:1400px;margin:0 auto}
+.page.active{display:block}
+
+/* ── GRID METRICS ── */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:24px}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;position:relative;overflow:hidden;transition:border-color .2s}
+.metric-card:hover{border-color:var(--border2)}
+.metric-card::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at top right, var(--glow), transparent 60%);pointer-events:none}
+.metric-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim2);margin-bottom:8px}
+.metric-value{font-family:"Playfair Display",serif;font-size:26px;font-weight:600;color:var(--text);line-height:1.1}
+.metric-value.gold{color:var(--gold)}
+.metric-value.green{color:var(--green)}
+.metric-value.red{color:var(--red)}
+.metric-sub{font-size:11px;color:var(--dim2);margin-top:4px}
+.metric-delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 7px;border-radius:10px;margin-top:6px;font-weight:500}
+.metric-delta.up{background:rgba(0,217,126,0.12);color:var(--green)}
+.metric-delta.down{background:rgba(255,77,106,0.12);color:var(--red)}
+
+/* ── CHARTS ── */
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.chart-title{font-size:13px;font-weight:600;color:var(--text)}
+.chart-legend{display:flex;gap:16px}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim2)}
+.leg-dot{width:8px;height:2px;border-radius:1px}
+canvas{width:100%;display:block}
+.eq-canvas-wrap{position:relative}
+.chart-controls{display:flex;gap:4px}
+.cbt{background:none;border:1px solid var(--border);color:var(--dim2);padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif}
+.cbt:hover,.cbt.active{background:rgba(201,168,76,0.1);border-color:var(--gold);color:var(--gold)}
+
+/* ── BOT STATUS CARDS ── */
+.bot-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.bot-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+.bot-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.bot-name{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--dim2)}
+.bot-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600}
+.bot-badge.live{background:rgba(255,77,106,0.15);color:var(--red)}
+.bot-badge.paper{background:rgba(201,168,76,0.12);color:var(--gold)}
+.bot-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bm{background:var(--bg2);border-radius:6px;padding:8px 10px}
+.bm-l{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:3px}
+.bm-v{font-size:15px;font-family:"Playfair Display",serif;font-weight:600}
+
+/* ── HEATMAP ── */
+.heatmap-grid{display:grid;gap:3px}
+.hm-cell{border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;font-family:"DM Mono",monospace;cursor:default;transition:opacity .15s}
+.hm-cell:hover{opacity:0.8}
+
+/* ── SECTION HEADERS ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--dim2)}
+.section-action{font-size:11px;color:var(--gold);background:none;border:1px solid rgba(201,168,76,0.3);padding:4px 10px;border-radius:4px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif}
+.section-action:hover{background:rgba(201,168,76,0.1)}
+
+/* ── TABLES ── */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.data-table td{padding:10px 12px;border-bottom:1px solid rgba(28,36,56,0.5);font-size:12px}
+.data-table tr:hover td{background:rgba(201,168,76,0.03)}
+
+/* ── SHADOW SYSTEM WIDGET ── */
+.shadow-widget{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px}
+.shadow-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
+.shadow-key{font-size:11px;color:var(--dim2);font-family:"DM Mono",monospace}
+.shadow-val{font-size:11px;font-weight:500}
+.shadow-adopted{color:var(--green)}
+.shadow-pending{color:var(--dim2)}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.card-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--dim2)}
+.card-body{padding:16px}
+
+/* ── INPUTS & BUTTONS ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-field{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim2)}
+.form-input{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:13px;font-family:"DM Sans",sans-serif;transition:border .15s}
+.form-input:focus{outline:none;border-color:var(--gold)}
+.btn-gold{background:var(--gold);color:#000;border:none;padding:9px 20px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;letter-spacing:.04em;transition:background .15s;font-family:"DM Sans",sans-serif}
+.btn-gold:hover{background:var(--gold2)}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--dim2);padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text)}
+.btn-danger{background:none;border:1px solid rgba(255,77,106,0.3);color:var(--red);padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all .15s}
+.btn-danger:hover{background:rgba(255,77,106,0.1)}
+
+/* ── MODALS ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0;width:420px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.5)}
+.modal .mt{font-family:"Playfair Display",serif;font-size:16px;font-weight:600;padding:20px 24px;border-bottom:1px solid var(--border);color:var(--text)}
+.modal .mb{padding:20px 24px;display:flex;flex-direction:column;gap:12px}
+.modal .mc-row{display:flex;justify-content:flex-end;gap:8px;padding:12px 24px;border-top:1px solid var(--border)}
+.modal label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim2);display:block;margin-bottom:4px}
+.modal input,.modal select,.modal textarea{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:6px;font-size:13px;width:100%;font-family:"DM Sans",sans-serif}
+.modal input:focus,.modal select:focus{outline:none;border-color:var(--gold)}
+
+/* ── MISC ── */
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi{background:var(--bg2);border-radius:7px;padding:12px}
+.kl{font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim);margin-bottom:6px}
+.kv{font-size:18px;font-family:"Playfair Display",serif;font-weight:600}
+.ka{font-size:11px;color:var(--dim2);margin-top:2px}
+.ks{font-size:11px;color:var(--dim2)}
+.purple{color:var(--purple)}
+.gold{color:var(--gold)}
+.clr-g{color:var(--green)}
+.clr-r{color:var(--red)}
+.pb{background:none;border:1px solid var(--border);color:var(--dim2);padding:3px 9px;border-radius:4px;font-size:10px;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif}
+.pb.active,.pb:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.08)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
+.b-live{background:rgba(255,77,106,0.15);color:var(--red)}
+.b-paper{background:rgba(201,168,76,0.12);color:var(--gold)}
+.b-on{background:rgba(0,217,126,0.12);color:var(--green)}
+.b-off{background:rgba(255,77,106,0.12);color:var(--red)}
+.empty-state{text-align:center;padding:40px;color:var(--dim);font-size:13px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.dot-live{background:var(--red);box-shadow:0 0 6px var(--red)}
+.dot-paper{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+.dot-off{background:var(--dim)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.page.active{animation:fadeIn .2s ease}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.dot-live{animation:pulse 2s infinite}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div style="text-align:center;margin-bottom:8px">
+    <span style="font-family:'Playfair Display',Georgia,serif;font-size:36px;font-weight:700;color:#b8942a;letter-spacing:3px">BAFIR</span>
+    <span style="font-family:'DM Sans',sans-serif;font-size:14px;color:var(--dim2);display:block;margin-top:2px;letter-spacing:1px">TRADING</span>
+  </div>
+  <div class="login-box">
+    <h2>Acceso al panel</h2>
+    <input type="password" id="login-pw" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn-login" onclick="doLogin()">Entrar</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div id="env-vars-warning" style="display:none;background:rgba(255,193,7,.12);border:1px solid rgba(255,193,7,.4);border-radius:10px;padding:12px 18px;margin:0 0 16px;font-size:13px;color:#e0c060">
+    ⚠️ <strong>Los bots no están conectados.</strong>
+    En Railway, configura <code style="background:rgba(255,255,255,.1);padding:2px 5px;border-radius:3px">LIVE_BOT_URL</code> y <code style="background:rgba(255,255,255,.1);padding:2px 5px;border-radius:3px">PAPER_BOT_URL</code> con las URLs de los servicios.
+  </div>
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sb-logo">
+      <span style="font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;color:#b8942a;letter-spacing:2px;line-height:1">BAFIR</span>
+      <span class="sb-logo-text" style="font-size:11px;color:var(--dim2);font-family:'DM Sans',sans-serif;font-weight:400;margin-left:2px">Trading</span>
+    </div>
+    <nav class="sb-nav">
+      <button class="ni active" onclick="showPage('overview',this)"><span class="ni-icon">📊</span><span class="ni-label">Resumen</span></button>
+      <button class="ni" onclick="showPage('performance',this)"><span class="ni-icon">📈</span><span class="ni-label">Rendimiento</span></button>
+      <button class="ni" onclick="showPage('bots',this)"><span class="ni-icon">🤖</span><span class="ni-label">Bots</span></button>
+      <button class="ni" onclick="showPage('clients',this)"><span class="ni-icon">👥</span><span class="ni-label">Clientes</span></button>
+      <button class="ni" onclick="showPage('distributions',this)"><span class="ni-icon">💸</span><span class="ni-label">Distribuciones</span></button>
+      <button class="ni" onclick="showPage('movements',this)"><span class="ni-icon">💶</span><span class="ni-label">Movimientos</span></button>
+      <button class="ni" onclick="showPage('settings',this)"><span class="ni-icon">⚙️</span><span class="ni-label">Ajustes</span></button>
+    </nav>
+    <div class="sb-bottom">
+      <button class="sb-toggle" onclick="toggleSidebar()"><span style="font-size:14px">◀</span><span class="ni-label" style="margin-left:8px">Colapsar</span></button>
+      <button class="sb-toggle" onclick="logout()"><span style="font-size:14px">⏻</span><span class="ni-label" style="margin-left:8px;color:var(--dim)">Salir</span></button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Resumen global</div>
+      <div class="topbar-right">
+        <div class="session-badge" id="session-timer">—</div>
+      </div>
+    </div>
+
+    <!-- ══ OVERVIEW ══ -->
+    <div class="page active" id="page-overview">
+      <!-- Top metrics -->
+      <div class="metrics-grid" id="ov-metrics">
+        <div class="metric-card">
+          <div class="metric-label">Capital total</div>
+          <div class="metric-value gold" id="ov-balance">—</div>
+          <div class="metric-sub" id="ov-balance-sub">—</div>
+        </div>
+        <div class="metric-card" style="cursor:pointer" onclick="showPage('settings',document.querySelector('.ni:nth-child(7)'));setTimeout(()=>document.getElementById('mc-amount').focus(),300)" title="Tu dinero personal en el bot (no el de los clientes)">
+          <div class="metric-label">Mi capital (gestor)</div>
+          <div class="metric-value" id="ov-mycap">—</div>
+          <div class="metric-sub">Click para editar en Ajustes</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Rendimiento total</div>
+          <div class="metric-value" id="ov-ret">—</div>
+          <div class="metric-sub" id="ov-ret-abs">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Clientes activos</div>
+          <div class="metric-value" id="ov-nc">—</div>
+          <div class="metric-sub" id="ov-unalloc">—</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Próx. distribución</div>
+          <div class="metric-value purple" id="ov-dist">—</div>
+          <div class="metric-sub">siguiente ciclo</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Fear &amp; Greed</div>
+          <div class="metric-value" id="ov-fg">—</div>
+          <div class="metric-sub" id="ov-fg-source">—</div>
+        </div>
+      </div>
+
+      <!-- Live balances by currency -->
+      <div class="chart-card" style="margin-bottom:20px">
+        <div class="chart-header">
+          <div class="chart-title">Balances actuales en el bot</div>
+          <button class="section-action" onclick="loadLiveBalances()">↺ Actualizar</button>
+        </div>
+        <div id="live-balances-content" style="padding:4px 0">
+          <div style="color:var(--dim);font-size:12px;padding:12px">Cargando balances...</div>
+        </div>
+      </div>
+
+      <!-- Bot status row -->
+      <div class="bot-grid" id="bot-status-grid">
+        <div class="bot-card" id="live-bot-card">
+          <div class="bot-card-header">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="dot dot-off" id="live-dot"></span>
+              <span class="bot-name">🎯 LIVE BOT</span>
+            </div>
+            <span class="bot-badge live" id="live-mode-badge">—</span>
+          </div>
+          <div class="bot-metrics">
+            <div class="bm"><div class="bm-l">Capital</div><div class="bm-v gold" id="live-tv">—</div></div>
+            <div class="bm"><div class="bm-l">Retorno</div><div class="bm-v" id="live-ret">—</div></div>
+            <div class="bm"><div class="bm-l">Win Rate</div><div class="bm-v" id="live-wr">—</div></div>
+            <div class="bm"><div class="bm-l">Régimen</div><div class="bm-v" id="live-regime">—</div></div>
+          </div>
+        </div>
+        <div class="bot-card" id="paper-bot-card">
+          <div class="bot-card-header">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="dot dot-off" id="paper-dot"></span>
+              <span class="bot-name">📋 PAPER BOT</span>
+            </div>
+            <span class="bot-badge paper" id="paper-mode-badge">—</span>
+          </div>
+          <div class="bot-metrics">
+            <div class="bm"><div class="bm-l">Capital</div><div class="bm-v gold" id="paper-tv">—</div></div>
+            <div class="bm"><div class="bm-l">Retorno</div><div class="bm-v" id="paper-ret">—</div></div>
+            <div class="bm"><div class="bm-l">Win Rate</div><div class="bm-v" id="paper-wr">—</div></div>
+            <div class="bm"><div class="bm-l">Trades</div><div class="bm-v" id="paper-trades">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Equity chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Curva de equity</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="chart-controls">
+              <button class="cbt active" id="btn-show-live" onclick="setBotView('live',this)">Live</button>
+              <button class="cbt" id="btn-show-paper" onclick="setBotView('paper',this)">Paper</button>
+              <button class="cbt" id="btn-show-both" onclick="setBotView('both',this)">Ambos</button>
+            </div>
+            <div class="chart-controls" id="eq-period-btns">
+              <button class="cbt active" onclick="setEqPeriod('1D',this)">1D</button>
+              <button class="cbt" onclick="setEqPeriod('1W',this)">1S</button>
+              <button class="cbt" onclick="setEqPeriod('1M',this)">1M</button>
+              <button class="cbt" onclick="setEqPeriod('1Y',this)">1A</button>
+              <button class="cbt" onclick="setEqPeriod('ALL',this)">Todo</button>
+            </div>
+            <div class="chart-legend">
+              <div class="leg-item"><div class="leg-dot" style="background:var(--gold)"></div><span id="live-equity-label">Live</span></div>
+              <div class="leg-item"><div class="leg-dot" style="background:var(--blue);border-top:1px dashed var(--blue)"></div><span id="paper-equity-label">Paper</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="eq-canvas-wrap">
+          <canvas id="eq-canvas" style="height:200px"></canvas>
+        </div>
+      </div>
+      <!-- Hidden compat elements for original JS -->
+      <span id="ov-date" style="display:none"></span>
+      <div id="ov-mg" style="display:none"></div>
+
+      <!-- Period performance -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Rendimiento por período</div>
+          <div id="ov-prow" style="display:flex;gap:4px"></div>
+        </div>
+        <div id="ov-pd"></div>
+      </div>
+
+      <!-- Recent trades -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Últimas operaciones</div>
+          <div style="display:flex;gap:6px">
+            <button class="cbt active" onclick="setTradesView('live',this)">Live</button>
+            <button class="cbt" onclick="setTradesView('paper',this)">Paper</button>
+          </div>
+        </div>
+        <div id="recent-trades-content">
+          <div style="color:var(--dim);font-size:12px;padding:16px;text-align:center">Cargando operaciones...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PERFORMANCE ══ -->
+    <div class="page" id="page-performance">
+      <div class="kpi-row" id="perf-kpis" style="margin-bottom:20px"></div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Historial mensual</div>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Mes</th><th>Inicio</th><th>Fin</th><th>P&amp;L</th><th>P&amp;L %</th></tr></thead>
+          <tbody id="perf-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ BOTS ══ -->
+    <div class="page" id="page-bots">
+      <!-- Learning stats -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Estado del aprendizaje</div>
+          <button class="section-action" onclick="loadBotStats()">↺ Actualizar</button>
+        </div>
+        <div id="bot-learning-content">
+          <div class="bot-grid">
+            <div>
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim2);margin-bottom:10px">Q-Learning</div>
+              <div class="bm" style="margin-bottom:6px"><div class="bm-l">Estados aprendidos</div><div class="bm-v" id="bs-qstates">—</div></div>
+              <div class="bm" style="margin-bottom:6px"><div class="bm-l">Epsilon (exploración)</div><div class="bm-v" id="bs-epsilon">—</div></div>
+              <div class="bm"><div class="bm-l">Replay buffer</div><div class="bm-v" id="bs-replay">—</div></div>
+            </div>
+            <div>
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim2);margin-bottom:10px">DQN Red neuronal</div>
+              <div class="bm" style="margin-bottom:6px"><div class="bm-l">Updates totales</div><div class="bm-v" id="bs-dqn-updates">—</div></div>
+              <div class="bm" style="margin-bottom:6px"><div class="bm-l">Loss avg</div><div class="bm-v" id="bs-dqn-loss">—</div></div>
+              <div class="bm"><div class="bm-l">Buffer DQN</div><div class="bm-v" id="bs-dqn-buf">—</div></div>
+            </div>
+          </div>
+          <!-- Multi-agent table -->
+          <div style="margin-top:16px">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim2);margin-bottom:10px">Multi-Agent (especialización por régimen)</div>
+            <table class="data-table" id="bs-agents-table">
+              <thead><tr><th>Régimen</th><th>Trades</th><th>Win Rate</th><th>Epsilon</th><th>Estado</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shadow system -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Paper Shadow (validación A/B)</div>
+        </div>
+        <div id="shadow-content">
+          <div class="shadow-widget">
+            <div class="shadow-row"><span class="shadow-key">Señales observadas</span><span class="shadow-val" id="sh-observed">—</span></div>
+            <div class="shadow-row"><span class="shadow-key">Señales adoptadas</span><span class="shadow-val shadow-adopted" id="sh-adopted">—</span></div>
+            <div class="shadow-row"><span class="shadow-key">Señales rechazadas</span><span class="shadow-val" id="sh-rejected">—</span></div>
+            <div class="shadow-row"><span class="shadow-key">Observando ahora</span><span class="shadow-val shadow-pending" id="sh-active">—</span></div>
+          </div>
+          <div id="sh-signals-list"></div>
+        </div>
+      </div>
+
+      <!-- Strategy weights -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Meta-learning (pesos de estrategias)</div>
+        </div>
+        <div id="strat-weights-content">
+          <div class="bot-grid" id="strat-weights-grid"></div>
+        </div>
+      </div>
+
+      <!-- Alert config -->
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">Umbrales de alertas Telegram</div></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-field"><label class="form-label">Live ganancia (%)</label><input id="alert-win" type="number" step="0.5" value="3" class="form-input"></div>
+            <div class="form-field"><label class="form-label">Live pérdida (%)</label><input id="alert-loss" type="number" step="0.5" value="3" class="form-input"></div>
+            <div class="form-field"><label class="form-label">Paper ganancia (%)</label><input id="alert-paper-win" type="number" step="0.5" value="5" class="form-input"></div>
+            <div class="form-field"><label class="form-label">Paper pérdida (%)</label><input id="alert-paper-loss" type="number" step="0.5" value="4" class="form-input"></div>
+          </div>
+          <button class="btn-gold" onclick="saveAlertConfig()">Guardar alertas</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CLIENTS ══ -->
+    <div class="page" id="page-clients">
+      <div class="section-header">
+        <div class="section-title">Clientes</div>
+        <button class="section-action" onclick="openModal('modal-new-client')">+ Nuevo cliente</button>
+      </div>
+      <div class="chart-card">
+        <table class="data-table">
+          <thead><tr><th>Cliente</th><th>Capital</th><th>P&amp;L</th><th>ROI</th><th>Acciones</th></tr></thead>
+          <tbody id="clients-tbody"><tr><td colspan="5" class="empty-state">Cargando...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="page" id="page-client-detail" style="display:none;padding:0;margin-top:16px">
+        <div id="cd-content"></div>
+      </div>
+    </div>
+
+    <!-- ══ DISTRIBUTIONS ══ -->
+    <div class="page" id="page-distributions">
+      <div id="dist-calendar" class="chart-card">
+        <div class="chart-header"><div class="chart-title">Calendario de distribuciones</div></div>
+        <table class="data-table">
+          <thead><tr><th>Cliente</th><th>Fecha</th><th>Importe</th><th>Estado</th><th>Acción</th></tr></thead>
+          <tbody id="dist-calendar-tbody"><tr><td colspan="5" class="empty-state">Sin distribuciones programadas</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ MOVEMENTS ══ -->
+    <div class="page" id="page-movements">
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">Movimientos</div></div>
+        <table class="data-table">
+          <thead><tr><th>Fecha</th><th>Cliente</th><th>Tipo</th><th>Importe</th></tr></thead>
+          <tbody id="movements-tbody"><tr><td colspan="4" class="empty-state">Sin movimientos</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ SETTINGS ══ -->
+    <div class="page" id="page-settings">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">Registrar depósito</div></div>
+          <div class="card-body">
+            <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:6px;padding:10px 12px;margin-bottom:16px;font-size:11px;line-height:1.6;color:var(--dim2)">
+              <b style="color:var(--gold)">Flujo correcto:</b> Primero añade el dinero tú mismo en Binance Spot. El bot no puede tocarlo sin tu orden. Después registra aquí cuánto añadiste y de quién es.
+            </div>
+            <div class="form-field" style="margin-bottom:10px">
+              <label class="form-label">Importe añadido</label>
+              <input id="mc-amount" type="number" placeholder="100" class="form-input">
+            </div>
+            <div class="form-row" style="margin-bottom:10px">
+              <div class="form-field">
+                <label class="form-label">Divisa</label>
+                <select id="mc-currency" class="form-input"><option value="USD">USD</option><option value="EUR">EUR</option></select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Pertenece a</label>
+                <select id="mc-owner" class="form-input" onchange="toggleClientSelect(this.value)">
+                  <option value="manager">Mí (gestor)</option>
+                  <option value="client">Un cliente</option>
+                </select>
+              </div>
+            </div>
+            <div id="mc-client-row" class="form-field" style="margin-bottom:10px;display:none">
+              <label class="form-label">Cliente</label>
+              <select id="mc-client-id" class="form-input"><option value="">Cargando...</option></select>
+            </div>
+            <div class="form-field" style="margin-bottom:14px">
+              <label class="form-label">Nota (opcional)</label>
+              <input id="mc-note" placeholder="ej: Depósito inicial marzo 2026" class="form-input">
+            </div>
+            <button class="btn-gold" onclick="registerDeposit()">Registrar depósito</button>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">Seguridad</div></div>
+          <div class="card-body" id="settings-2fa">Cargando...</div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">IPs permitidas</div></div>
+          <div class="card-body">
+            <div id="ip-list" style="margin-bottom:10px;font-size:12px;color:var(--dim2)">Cargando...</div>
+            <div style="display:flex;gap:8px">
+              <input id="new-ip" placeholder="IP o CIDR" class="form-input" style="flex:1">
+              <button class="btn-gold" onclick="addIP()">Añadir</button>
+              <button class="btn-ghost" onclick="addMyIP()">Mi IP</button>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">Cuenta</div></div>
+          <div class="card-body">
+            <div style="margin-bottom:12px">
+              <label class="form-label">Nueva contraseña</label>
+              <input id="new-pw" type="password" placeholder="Nueva contraseña" class="form-input" style="margin-bottom:6px">
+              <input id="confirm-pw" type="password" placeholder="Confirmar" class="form-input">
+            </div>
+            <button class="btn-gold" onclick="changeAdminPw()">Cambiar contraseña</button>
+            <div id="pw-msg" style="font-size:11px;margin-top:8px;color:var(--dim2)"></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">Equity del dashboard</div></div>
+          <div class="card-body">
+            <p style="font-size:12px;color:var(--dim2);margin-bottom:12px">Borra solo los datos del gráfico de Bafir. No afecta al bot.</p>
+            <button class="btn-ghost" onclick="if(confirm('¿Resetear datos del gráfico?'))api('POST','/api/admin/reset-equity').then(()=>location.reload())">↺ Resetear gráfico</button>
+          </div>
+        </div>
+      </div>
+      <div id="audit-section" style="margin-top:16px">
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">Registro de auditoría</div></div>
+          <table class="data-table">
+            <thead><tr><th>Fecha</th><th>Acción</th><th>IP</th></tr></thead>
+            <tbody id="audit-tbody"><tr><td colspan="3" class="empty-state">Sin registros</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-capital">
+  <div class="modal">
+    <div class="modal-title">Capital aportado al fondo</div>
+    <div class="modal-field"><label>Importe</label><input id="mc-amount" type="number" step="10" placeholder="100"></div>
+    <div class="modal-field"><label>Divisa</label><select id="mc-currency"><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
+    <div class="modal-field"><label>Nota</label><input id="mc-note" placeholder="Capital inicial"></div>
+    <div id="mc-balance-info"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="saveManagerCapital()">Guardar</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-capital')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-new-client">
+  <div class="modal">
+    <div class="modal-title">Nuevo cliente</div>
+    <div class="modal-field"><label>Nombre</label><input id="nc-name" placeholder="Juan García"></div>
+    <div class="modal-field"><label>Email</label><input id="nc-email" type="email" placeholder="juan@email.com"></div>
+    <div class="modal-field"><label>Divisa</label><select id="nc-currency"><option value="EUR">EUR</option><option value="USD">USD</option></select></div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="createClient()">Crear</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-new-client')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-dep">
+  <div class="modal">
+    <div class="modal-title" id="dep-modal-title">Nuevo movimiento</div>
+    <div class="modal-field"><label>Tipo</label><select id="dep-type" onchange="updateDepTotal()"><option value="deposit">Depósito</option><option value="withdrawal">Retirada</option></select></div>
+    <div id="dep-rows"></div>
+    <div class="modal-field"><label>Total</label><div id="dep-total" style="font-family:var(--font-mono);font-size:18px;color:var(--gold)">$0.00</div></div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="submitDeposit()">Confirmar</button>
+      <button class="btn btn-ghost" onclick="addDepDistRow()">+ Añadir</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-dep')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-dist-config">
+  <div class="modal">
+    <div class="modal-title">Configurar distribución</div>
+    <div class="modal-field">
+      <label>Activar pagos</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4px"><input type="checkbox" id="dist-enabled" style="width:auto"><span style="font-size:12px;color:var(--dim2)">Distribución periódica activa</span></div>
+    </div>
+    <div class="modal-field"><label>Porcentaje (%)</label><input id="dist-pct" type="number" step="1" min="1" max="100" placeholder="10" oninput="updateDistPreview()"></div>
+    <div class="modal-field"><label>Base de cálculo</label><select id="dist-base" onchange="updateDistPreview()"><option value="initial">Aportación inicial</option><option value="current">Valor actual</option></select></div>
+    <div class="modal-field"><label>Periodicidad</label><select id="dist-period" onchange="updateDistPreview()"><option value="monthly">Mensual</option><option value="quarterly">Trimestral</option><option value="annual">Anual</option></select></div>
+    <div id="dist-preview" style="font-size:12px;color:var(--dim2);margin-top:8px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="saveDist()">Guardar</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-dist-config')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+<script>
+
+// Auth globals
+const token = localStorage.getItem("bafir_token") || "";
+const API = "";  // same origin
+
+// Redirect if not logged in
+if (!token) { window.location.href = "/"; }
+
+async function api(method,url,body){
+  const r=await fetch(API+url,{method,headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:body?JSON.stringify(body):undefined});
+  if(r.status===401){localStorage.clear();window.location.href="/";return null;}
+  return r.json();
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById("sidebar");
+  const main = document.querySelector(".main");
+  const collapsed = sb.classList.toggle("collapsed");
+  main.style.marginLeft = collapsed ? "52px" : "220px";
+  localStorage.setItem("sidebarCollapsed", collapsed ? "1" : "0");
+}
+
+// Restore sidebar state on load
+(function() {
+  if (localStorage.getItem("sidebarCollapsed") === "1") {
+    const sb = document.getElementById("sidebar");
+    const main = document.querySelector(".main");
+    if (sb) { sb.classList.add("collapsed"); if(main) main.style.marginLeft="52px"; }
+  }
+})();
+
+async function logout(){await api("POST","/api/auth/logout");localStorage.clear();window.location.href="/";}
+
+// showPage: see enhanced version below
+
+// Format
+const fUSD=n=>"$"+new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+const fEUR=n=>"€"+new Intl.NumberFormat("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+const fC=(n,c)=>c==="EUR"?fEUR(n):fUSD(n);
+const fP=n=>(n>=0?"+":"")+n.toFixed(2)+"%";
+const clr=n=>n>=0?"var(--green)":"var(--red)";
+const fD=ts=>new Date(ts).toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric"});
+
+function renderPeriods(rid,did,periods){
+  const c=document.getElementById(rid); if(!c||!periods)return;
+  c.innerHTML=periods.map(p=>`<button class="pb ${p.period==="1M"?"active":""}" onclick="selP('${rid}','${did}',${JSON.stringify(periods).replace(/"/g,'&quot;')},'${p.period}')">${p.period}</button>`).join("");
+  const def=periods.find(p=>p.period==="1M")||periods[0];
+  if(def) renderPD(did,def);
+}
+function selP(rid,did,periods,period){
+  document.querySelectorAll(`#${rid} .pb`).forEach(b=>b.classList.toggle("active",b.textContent===period));
+  const p=periods.find(x=>x.period===period); if(p) renderPD(did,p);
+}
+function renderPD(did,p){
+  const el=document.getElementById(did); if(!el)return;
+  const c=p.currency||"USD";
+  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+    <div style="text-align:center;padding:10px;background:var(--bg2);border-radius:7px"><div style="font-size:8px;color:var(--dim);letter-spacing:.1em;margin-bottom:3px">P&L</div><div style="font-size:17px;font-weight:700;color:${clr(p.pnl||0)}">${fC(p.pnl||0,c)}</div></div>
+    <div style="text-align:center;padding:10px;background:var(--bg2);border-radius:7px"><div style="font-size:8px;color:var(--dim);letter-spacing:.1em;margin-bottom:3px">P&L %</div><div style="font-size:17px;font-weight:700;color:${clr(p.pnlPct||0)}">${fP(p.pnlPct||0)}</div></div>
+    <div style="text-align:center;padding:10px;background:var(--bg2);border-radius:7px"><div style="font-size:8px;color:var(--dim);letter-spacing:.1em;margin-bottom:3px">VALOR</div><div style="font-size:17px;font-weight:700;color:var(--gold)">${fC(p.end||0,c)}</div></div>
+  </div>`;
+}
+function renderMonthly(cid,monthly,cur="USD"){
+  const el=document.getElementById(cid); if(!el||!monthly?.length){if(el)el.innerHTML=`<div style="color:var(--dim);font-size:11px;padding:14px;text-align:center;grid-column:1/-1">Sin datos aún</div>`;return;}
+  el.innerHTML=monthly.slice(-12).map(m=>{
+    const bg=m.pnlPct>=0?`rgba(0,217,126,${Math.min(.4,Math.abs(m.pnlPct)/20)})`:`rgba(255,77,106,${Math.min(.4,Math.abs(m.pnlPct)/20)})`;
+    return `<div class="mc" style="background:${bg};border:1px solid ${m.pnlPct>=0?"#00d97e22":"#ff4d6a22"}"><div class="ml">${m.label}</div><div class="mp" style="color:${clr(m.pnlPct)}">${fP(m.pnlPct)}</div><div style="font-size:8px;color:var(--dim2);margin-top:1px">${fC(m.pnl,cur)}</div></div>`;
+  }).join("");
+}
+function formatEqTime(ts, data) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  const span = data.length > 1 ? data[data.length-1].ts - data[0].ts : 0;
+  if (span < 3600000*2) return d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+  if (span < 86400000*3) return d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+  if (span < 86400000*14) return d.toLocaleDateString("es-ES",{weekday:"short",day:"2-digit"});
+  return d.toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit"});
+}
+
+function drawEqCanvas(liveData, paperData, showLive, showPaper) {
+  const canvas = document.getElementById("eq-canvas");
+  if (!canvas) return;
+  const ctx0 = canvas.getContext("2d");
+  const hasData = (showLive && liveData?.length) || (showPaper && paperData?.length);
+  if (!hasData) {
+    const W0 = canvas.offsetWidth || 600;
+    canvas.width = W0; canvas.height = 120;
+    ctx0.fillStyle = "rgba(107,99,88,0.6)";
+    ctx0.font = "11px Playfair Display,serif"; ctx0.textAlign = "center";
+    ctx0.fillText("Sin datos de equity aún — el bot está acumulando historial", W0/2, 60);
+    return;
+  }
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const W = rect.width || 600, H = 120;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+"px"; canvas.style.height = H+"px";
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const AXIS_H=18, PAD=6, chartH=H-AXIS_H-PAD, chartW=W-PAD*2;
+
+  const toPoints = data => data
+    .filter(e => e != null)
+    .map((e,i)=>({
+      v: typeof e==="object" ? +(e.value??e.v??0) : +e,
+      t: e.ts ? (typeof e.ts==="string" ? new Date(e.ts).getTime() : +e.ts) : (e.t ? +e.t : (Date.now() - (data.length-1-i)*60000))
+    }))
+    .filter(e => e.v > 0 && e.t > 0);
+
+  const live = showLive && liveData?.length ? toPoints(liveData) : [];
+  const paper = showPaper && paperData?.length ? toPoints(paperData) : [];
+  const all = [...live, ...paper];
+  if (!all.length) return;
+
+  const allVals = all.map(p=>p.v);
+  const minV=Math.min(...allVals), maxV=Math.max(...allVals), rangeV=maxV-minV||1;
+  const minT=Math.min(...all.map(p=>p.t)), maxT=Math.max(...all.map(p=>p.t)), rangeT=maxT-minT||1;
+
+  const xOf = t => PAD + ((t-minT)/rangeT)*chartW;
+  const yOf = v => PAD + chartH - ((v-minV)/rangeV)*chartH;
+
+  const drawSeries = (pts, color, fill, dashed=false) => {
+    if (!pts.length) return;
+    ctx.beginPath();
+    ctx.moveTo(xOf(pts[0].t), yOf(pts[0].v));
+    pts.forEach(p => ctx.lineTo(xOf(p.t), yOf(p.v)));
+    ctx.lineTo(xOf(pts[pts.length-1].t), PAD+chartH);
+    ctx.lineTo(xOf(pts[0].t), PAD+chartH);
+    ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(xOf(pts[0].t), yOf(pts[0].v));
+    pts.forEach(p => ctx.lineTo(xOf(p.t), yOf(p.v)));
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    if (dashed) ctx.setLineDash([4,3]); else ctx.setLineDash([]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  };
+
+  if (paper.length) drawSeries(paper, "#3b82f6", "rgba(59,130,246,0.08)", true);
+  if (live.length)  drawSeries(live,  "#c9a84c", "rgba(201,168,76,0.12)");
+
+  // X axis labels
+  ctx.fillStyle = "rgba(107,99,88,0.9)"; ctx.font = "9px DM Sans,sans-serif"; ctx.textAlign = "center";
+  const refData = live.length ? live : paper;
+  const nL = Math.min(5, refData.length);
+  for (let i=0; i<nL; i++) {
+    const idx = Math.round(i/(nL-1)*(refData.length-1));
+    const p = refData[idx];
+    ctx.fillText(formatEqTime(p.t, refData), xOf(p.t), H-3);
+    ctx.strokeStyle="rgba(107,99,88,0.15)"; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(xOf(p.t),PAD+chartH); ctx.lineTo(xOf(p.t),H-AXIS_H); ctx.stroke();
+  }
+
+  // Store for hover
+  canvas._live = live; canvas._paper = paper;
+  canvas._bounds = {W,H,chartH,chartW,PAD,AXIS_H,minV,rangeV,minT,rangeT};
+
+  // ── Draw trade marks (entry/exit dots) ──────────────────────────────────
+  const trades = (_botStatus?._recentTrades||[]);
+  if (trades.length && live.length) {
+    for (const t of trades) {
+      const ts = t.ts ? new Date(t.ts).getTime() : null;
+      if (!ts || ts < minT || ts > maxT) continue;
+      const px = PAD + ((ts-minT)/rangeT)*chartW;
+      // Find nearest equity value at this timestamp
+      const nearest = live.reduce((best,p)=>Math.abs(p.t-ts)<Math.abs(best.t-ts)?p:best, live[0]);
+      const py = yOf(nearest.v);
+      const win = t.pnl >= 0;
+      ctx.beginPath();
+      ctx.arc(px, py, 4, 0, Math.PI*2);
+      ctx.fillStyle = win ? "rgba(0,217,126,0.9)" : "rgba(255,77,106,0.9)";
+      ctx.fill();
+      ctx.strokeStyle = win ? "#00d97e" : "#ff4d6a";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+}
+
+// Bafir chart hover
+(function setupEqHover(){
+  const canvas = document.getElementById("eq-canvas");
+  if (!canvas) return;
+  const tip = document.getElementById("eq-tooltip");
+  const cross = document.getElementById("eq-crosshair");
+
+  function findNearest(pts, mx, b) {
+    if (!pts?.length) return null;
+    const {PAD,chartW,minT,rangeT} = b;
+    return pts.reduce((best,p) => {
+      const px = PAD + ((p.t-minT)/rangeT)*chartW;
+      return Math.abs(px-mx) < Math.abs((best?PAD+((best.t-minT)/rangeT)*chartW:999)-mx) ? p : best;
+    }, null);
+  }
+
+  function onMove(e) {
+    const b = canvas._bounds; if (!b) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX ?? e.touches?.[0]?.clientX) - rect.left;
+    const live = canvas._live, paper = canvas._paper;
+    const pt = findNearest(live?.length ? live : paper, mx, b);
+    if (!pt) return;
+    const px = b.PAD + ((pt.t-b.minT)/b.rangeT)*b.chartW;
+    const lv = findNearest(live, mx, b);
+    const pv = findNearest(paper, mx, b);
+    const fv = v => v!=null ? "$"+Number(v).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : "—";
+    document.getElementById("et-val").innerHTML =
+      (lv ? `<span style="color:#c9a84c">L:${fv(lv.v)}</span>` : "") +
+      (lv && pv ? " · " : "") +
+      (pv ? `<span style="color:#3b82f6">P:${fv(pv.v)}</span>` : "");
+    document.getElementById("et-ts").textContent = new Date(pt.t).toLocaleString("es-ES");
+    tip.style.left = (px+8>b.W-180 ? px-188 : px+8)+"px";
+    tip.style.top = "4px"; tip.style.opacity = "1";
+    cross.style.left = px+"px"; cross.style.opacity = "1";
+  }
+
+  canvas.addEventListener("mousemove", onMove);
+  canvas.addEventListener("mouseleave", () => { tip.style.opacity="0"; cross.style.opacity="0"; });
+})();
+
+function renderEquity(svgId,fillId,lineId,curve,color="#c9a84c"){
+  // Legacy stub — no longer used for main chart
+}
+
+function drawClientCanvas(gross, net) {
+  const canvas = document.getElementById("cd-canvas");
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const W = rect.width || 600, H = 130;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+"px"; canvas.style.height = H+"px";
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const AXIS_H=18, PAD=6, chartH=H-AXIS_H-PAD, chartW=W-PAD*2;
+
+  const toPoints = data => (data||[]).map(e=>({
+    v: e.value??e.v??0,
+    t: e.ts ? new Date(e.ts).getTime() : Date.now()
+  }));
+
+  const g = toPoints(gross), n = toPoints(net);
+  const all = [...g, ...n];
+  if (!all.length) return;
+
+  const allVals = all.map(p=>p.v);
+  const minV=Math.min(...allVals), maxV=Math.max(...allVals), rangeV=maxV-minV||1;
+  const minT=Math.min(...all.map(p=>p.t)), maxT=Math.max(...all.map(p=>p.t)), rangeT=maxT-minT||1;
+
+  const xOf = t => PAD + ((t-minT)/rangeT)*chartW;
+  const yOf = v => PAD + chartH - ((v-minV)/rangeV)*chartH;
+
+  const drawSeries = (pts, color, fillOpacity, dashed=false) => {
+    if (!pts.length) return;
+    ctx.beginPath();
+    ctx.moveTo(xOf(pts[0].t), yOf(pts[0].v));
+    pts.forEach(p => ctx.lineTo(xOf(p.t), yOf(p.v)));
+    ctx.lineTo(xOf(pts[pts.length-1].t), PAD+chartH);
+    ctx.lineTo(xOf(pts[0].t), PAD+chartH);
+    ctx.closePath();
+    ctx.fillStyle = color.replace(")", `,${fillOpacity})`).replace("rgb","rgba");
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(xOf(pts[0].t), yOf(pts[0].v));
+    pts.forEach(p => ctx.lineTo(xOf(p.t), yOf(p.v)));
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    if (dashed) ctx.setLineDash([4,3]); else ctx.setLineDash([]);
+    ctx.stroke(); ctx.setLineDash([]);
+  };
+
+  if (n.length) drawSeries(n, "rgb(168,85,247)", 0.08, true);
+  if (g.length) drawSeries(g, "rgb(201,168,76)", 0.15);
+
+  // X axis
+  ctx.fillStyle="rgba(107,99,88,0.9)"; ctx.font="9px DM Sans,sans-serif"; ctx.textAlign="center";
+  const ref = g.length ? g : n;
+  const nL = Math.min(5, ref.length);
+  for (let i=0; i<nL; i++) {
+    const idx = Math.round(i/(nL-1)*(ref.length-1));
+    const p = ref[idx];
+    const label = new Date(p.t).toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit"});
+    ctx.fillText(label, xOf(p.t), H-3);
+  }
+
+  // Y axis
+  const fv = v => "$"+Number(v).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
+  ctx.fillStyle="rgba(107,99,88,0.7)"; ctx.font="9px DM Sans,sans-serif";
+  ctx.textAlign="right"; ctx.fillText(fv(maxV), W-PAD, PAD+10);
+  ctx.textAlign="left";  ctx.fillText(fv(minV), PAD, PAD+chartH-2);
+
+  canvas._cg = g; canvas._cn = n;
+  canvas._cb = {W,H,chartH,chartW,PAD,AXIS_H,minV,rangeV,minT,rangeT};
+
+  // Hover
+  const tip=document.getElementById("cd-tooltip"), cross=document.getElementById("cd-crosshair");
+  canvas.onmousemove = e => {
+    const b=canvas._cb; if(!b) return;
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left;
+    const nearest = arr => arr?.length ? arr.reduce((best,p)=>{
+      const px=b.PAD+((p.t-b.minT)/b.rangeT)*b.chartW;
+      return Math.abs(px-mx)<Math.abs((best?b.PAD+((best.t-b.minT)/b.rangeT)*b.chartW:999)-mx)?p:best;
+    },null) : null;
+    const gp=nearest(canvas._cg), np=nearest(canvas._cn);
+    const ref=gp??np; if(!ref) return;
+    const px=b.PAD+((ref.t-b.minT)/b.rangeT)*b.chartW;
+    const fmv = v=>"$"+Number(v).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+    document.getElementById("cd-val").innerHTML=
+      (gp?`<span style="color:#c9a84c">Bruto: ${fmv(gp.v)}</span>`:"")+(gp&&np?" · ":"")+
+      (np?`<span style="color:#a855f7">Neto: ${fmv(np.v)}</span>`:"");
+    document.getElementById("cd-ts").textContent=new Date(ref.t).toLocaleString("es-ES");
+    tip.style.left=(px+8>b.W-200?px-208:px+8)+"px";
+    tip.style.top="4px"; tip.style.opacity="1";
+    cross.style.left=px+"px"; cross.style.opacity="1";
+  };
+  canvas.onmouseleave=()=>{ tip.style.opacity="0"; cross.style.opacity="0"; };
+}
+
+// ── Pages ──────────────────────────────────────────────────────────────────────
+let _botStatus = null;
+let _currentBotView = "live";
+
+function setBotView(view, btn) {
+  _currentBotView = view;
+  document.querySelectorAll("#btn-show-live,#btn-show-paper,#btn-show-both").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  if (_botStatus) renderBotCurves(_botStatus);
+  // También actualizar KPIs de estado del bot según la vista seleccionada
+  if (window._lastLiveStatus) renderBotKPIs(window._lastLiveStatus, view);
+}
+
+function renderBotKPIs(ls, view) {
+  // Seleccionar datos del bot correcto según la vista
+  let s = ls;
+  if (ls && (ls.live !== undefined || ls.paper !== undefined)) {
+    if (view === "paper") s = ls.paper || ls.live || ls;
+    else if (view === "both") s = ls.live || ls; // both → mostrar live en KPIs
+    else s = ls.live || ls;
+  }
+  if (!s) return;
+  // Si bot offline, mostrar estado claro
+  if (s.offline) {
+    const cards = document.querySelectorAll(".bot-kpi-card");
+    cards.forEach(c => { c.style.opacity = "0.4"; });
+    const lbl = document.getElementById("bot-confidence-label");
+    if(lbl) lbl.textContent = s.instance + " — Sin conexión (configura LIVE_BOT_URL / PAPER_BOT_URL en Railway)";
+    return;
+  }
+  const cards2 = document.querySelectorAll(".bot-kpi-card");
+  cards2.forEach(c => { c.style.opacity = "1"; });
+  // Actualizar label de qué bot estamos viendo
+  const viewLabel = view === "paper" ? "📋 Paper" : view === "both" ? "📋+🎯 Ambos" : "🎯 Live";
+  const confLabel = document.getElementById("bot-confidence-label");
+  if (confLabel) confLabel.textContent = "CONFIANZA BOT " + (view === "paper" ? "PAPER" : "LIVE");
+
+  const conf = s.confidence?.score ?? s.confidence ?? null;
+  const confEl = document.getElementById("bot-confidence");
+  const confSub = document.getElementById("bot-confidence-sub");
+  if (confEl) {
+    if (conf !== null && conf !== undefined) {
+      confEl.textContent = conf+"/100";
+      confEl.style.color = conf>=70?"var(--green)":conf>=40?"var(--gold)":"var(--red)";
+      if (confSub) confSub.textContent = conf>=70?"✅ Alta confianza":conf>=40?"⚠️ Confianza media":"🛡 Reduciendo posiciones";
+    } else {
+      confEl.textContent = "—";
+      confEl.style.color = "var(--dim)";
+      if (confSub) confSub.textContent = "Esperando datos del bot...";
+    }
+  }
+
+  const dp = s.dailyPnlPct||0;
+  const mult = s.momentumMult||1;
+  const momEl = document.getElementById("bot-momentum");
+  const momSub = document.getElementById("bot-momentum-sub");
+  if (momEl) {
+    momEl.textContent = dp>=0?"+"+dp.toFixed(1)+"%":dp.toFixed(1)+"%";
+    momEl.style.color = clr(dp);
+    const multLabel = mult>=2?"🔥🔥 ×"+mult.toFixed(1):mult>=1.5?"🚀 ×"+mult.toFixed(1):mult<=0.7?"🛡 ×"+mult.toFixed(1):"×"+mult.toFixed(1);
+    momSub.textContent = multLabel+" tamaño posiciones";
+  }
+
+  const regime = s.marketRegime||"—";
+  const cp = s.cryptoPanic;
+  const alertPairs = cp?.defensivePairs||[];
+  const apEl = document.getElementById("bot-regime");
+  const apSub = document.getElementById("bot-regime-sub");
+  if (apEl) {
+    apEl.textContent = regime;
+    apEl.style.color = regime==="BULL"?"var(--green)":regime==="BEAR"?"var(--red)":"var(--gold)";
+    apSub.textContent = alertPairs.length ? "⚠️ "+alertPairs.map(p=>p.replace("USDT","")).join(", ")+" en alerta" : "Sin pares defensivos";
+  }
+
+  const cpEl = document.getElementById("bot-news");
+  const cpSub = document.getElementById("bot-news-sub");
+  if (cpEl) {
+    if (cp) {
+      cpEl.textContent = cp.globalDefensive ? "🚨 ALERTA" : "✅ Normal";
+      cpEl.style.color = cp.globalDefensive ? "var(--red)" : "var(--green)";
+      const lastCheck = cp.lastCheck ? new Date(cp.lastCheck).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}) : "—";
+      cpSub.textContent = "Último check: "+lastCheck;
+    } else {
+      cpEl.textContent = "— Estado noticias";
+      cpEl.style.color = "var(--dim)";
+      if (cpSub) cpSub.textContent = "Esperando datos...";
+    }
+  }
+}
+
+function renderBotCurves(bs) {
+  const liveEq  = bs?.live  || [];
+  const paperEq = bs?.paper || [];
+  const showLive  = _currentBotView==="live"  || _currentBotView==="both";
+  const showPaper = _currentBotView==="paper" || _currentBotView==="both";
+
+  drawEqCanvas(liveEq, paperEq, showLive, showPaper);
+
+  const lastLive  = liveEq.length  ? liveEq[liveEq.length-1].value??liveEq[liveEq.length-1].v   : null;
+  const lastPaper = paperEq.length ? paperEq[paperEq.length-1].value??paperEq[paperEq.length-1].v : null;
+  document.getElementById("live-equity-label").textContent  = lastLive  ? "Live: "+fUSD(lastLive)  : "Live: sin datos";
+  document.getElementById("paper-equity-label").textContent = lastPaper ? "Paper: "+fUSD(lastPaper) : "Paper: sin datos";
+  if (!window._eqResizeAdded) { window._eqResizeAdded=true; window.addEventListener("resize",()=>requestAnimationFrame(()=>renderBotCurves(_botStatus))); }
+}
+
+async function loadOverview(){
+  let d, bs, ls;
+  try {
+    [d, bs, ls] = await Promise.all([
+      api("GET","/api/admin/metrics"),
+      api("GET","/api/bot/status"),
+      api("GET","/api/bots/live-status"),
+    ]);
+  } catch(e) {
+    console.error("[BAFIR] loadOverview fetch error:", e);
+    return;
+  }
+  if(!d) {
+    console.warn("[BAFIR] metrics returned null — token may be invalid");
+    return;
+  }
+  _botStatus = bs;
+  window._lastMetrics = d;
+  window._fxRate = d.fxRate||1.08;
+
+  document.getElementById("ov-date").textContent=new Date().toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+
+  // Balance = clientes + gestor
+  document.getElementById("ov-balance").textContent = fUSD(d.balanceUSD||d.aumUSD);
+  const mc = d.managerCapital;
+  const mcDisplay = mc?.amount>0 ? ` (${fUSD(d.managerCapitalUSD)} tuyo + ${fUSD(d.aumUSD)} clientes)` : ` · Añade tu capital arriba`;
+  document.getElementById("ov-balance-sub").textContent = fEUR((d.balanceUSD||d.aumUSD)/d.fxRate)+" EUR"+mcDisplay+" · ✎ editar";
+
+  document.getElementById("ov-nc").textContent=d.nClients;
+  document.getElementById("ov-unalloc").textContent=`${(d.unallocatedPct||0).toFixed(0)}% sin asignar`;
+  document.getElementById("ov-dist").textContent=fUSD(d.totalDistNextUSD||0);
+
+  const all=d.periods?.find(p=>p.period==="ALL");
+  if(all){
+    const retEl=document.getElementById("ov-ret");
+    retEl.textContent=fP(all.pnlPct||0);
+    retEl.style.color=clr(all.pnlPct||0);
+    document.getElementById("ov-ret-abs").textContent=(all.pnlPct>=0?"+":"")+fUSD(all.pnl||0);
+    document.getElementById("ov-ret-abs").style.color=clr(all.pnl||0);
+  }
+
+  // ── KPIs del bot (confianza, momentum, régimen, noticias) ─────────────────
+  if (ls) {
+    window._lastLiveStatus = ls;
+    // Show env var warning if bots not reachable
+    const warnEl = document.getElementById("env-vars-warning");
+    if(warnEl) warnEl.style.display = ls.botsReachable===false ? "block" : "none";
+    renderBotKPIs(ls, _currentBotView);
+    // Store trades for marks on chart
+    const lsForTrades = (ls.live || ls);
+    _botStatus._recentTrades = lsForTrades.recentTrades||[];
+  }
+
+  renderBotCurves(bs);
+  renderPeriods("ov-prow","ov-pd",d.periods);
+  renderMonthly("ov-mg",d.monthly);
+}
+async function loadRiskLearning(){
+  const d = await api("GET","/api/bots/risk-learning");
+  if(!d) return;
+  const renderRL = (data, elId) => {
+    const el = document.getElementById(elId);
+    if(!el) return;
+    const stats = data.stats||{};
+    const params = data.params||{};
+    if(!Object.keys(stats).length){
+      el.innerHTML='<div style="color:var(--dim);font-size:11px;font-style:italic">Sin datos suficientes aún (mínimo 5 evaluaciones por regla)</div>';
+      return;
+    }
+    el.innerHTML = Object.entries(stats).map(([key,st])=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:11px;font-weight:500">${st.name}</div>
+          <div style="font-size:9px;color:var(--dim)">${st.n} evaluaciones · Δprecio prom: ${st.avgPriceDelta>0?"+":""}${st.avgPriceDelta}%</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;font-weight:700;color:${st.accuracy>=60?"var(--green)":st.accuracy>=40?"var(--gold)":"var(--red)"}">${st.accuracy}% acierto</div>
+          <div style="font-size:9px;color:var(--dim)">param actual: <b>${st.currentParam}</b></div>
+        </div>
+      </div>`).join("");
+  };
+  renderRL(d.live, "rl-live");
+  renderRL(d.paper, "rl-paper");
+}
+
+async function loadPerformance(){
+  const d=await api("GET","/api/admin/metrics"); if(!d)return;
+  document.getElementById("perf-kpis").innerHTML=["1D","1W","1M"].map(per=>{const p=d.periods?.find(x=>x.period===per)||{pnlPct:0,pnl:0};return`<div class="kpi"><div class="kl">${per}</div><div class="kv" style="color:${clr(p.pnlPct)}">${fP(p.pnlPct)}</div><div class="ks">${fUSD(p.pnl)}</div></div>`;}).join("");
+  document.querySelector("#perf-tbody").innerHTML=(d.monthly||[]).slice().reverse().map(m=>`<tr><td>${m.label}</td><td>${fUSD(m.start)}</td><td>${fUSD(m.end)}</td><td style="color:${clr(m.pnl)};font-weight:600">${fUSD(m.pnl)}</td><td style="color:${clr(m.pnlPct)};font-weight:600">${fP(m.pnlPct)}</td></tr>`).join("")||`<tr><td colspan="5" style="text-align:center;color:var(--dim);padding:16px">Sin datos</td></tr>`;
+}
+async function loadDistributions(){
+  const clients=await api("GET","/api/admin/clients"); if(!clients)return;
+  const all=[];
+  for(const c of clients.filter(c=>c.distributionEnabled)){
+    const m=await api("GET",`/api/admin/clients/${c.id}/metrics`); if(!m)continue;
+    const ds=m.distSchedule;
+    (ds.past||[]).forEach(p=>all.push({...p,clientName:c.name,clientId:c.id,config:ds.config}));
+    if(ds.next) all.push({...ds.next,clientName:c.name,clientId:c.id,future:true,config:ds.config});
+  }
+  const tbody=document.getElementById("dist-calendar-tbody");
+  tbody.innerHTML=all.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(item=>`<tr>
+    <td><strong>${item.clientName}</strong></td>
+    <td>${fD(item.date)}</td>
+    <td style="color:${item.future?"var(--purple)":"var(--text)"};font-weight:600">${fC(item.amtDisplay,item.currency)}</td>
+    <td style="color:var(--dim2);font-size:10px">${item.config?.baseType==="initial"?"Aport. inicial":"Valor actual"}</td>
+    <td style="color:var(--dim2);font-size:10px">${{monthly:"Mensual",quarterly:"Trimestral",annual:"Anual"}[item.config?.periodicity]||"—"}</td>
+    <td><span class="badge ${item.future?"b-purple":item.paid?"b-paid":"b-pending"}">${item.future?"PRÓXIMA":item.paid?"PAGADA":"PENDIENTE"}</span></td>
+    <td>${(!item.paid&&!item.future)?`<button class="btn btn-green" style="padding:3px 9px;font-size:10px" onclick="markPaid('${item.clientId}','${new Date(item.date).toISOString().slice(0,7)}')">✓ Marcar pagada</button>`:"—"}</td>
+  </tr>`).join("")||`<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:20px">Sin distribuciones configuradas</td></tr>`;
+
+  // Summary KPIs
+  const totalPending=all.filter(i=>!i.paid&&!i.future).reduce((s,i)=>s+i.amtUSD,0);
+  const totalPaid=all.filter(i=>i.paid).reduce((s,i)=>s+i.amtUSD,0);
+  const nextTotal=all.filter(i=>i.future).reduce((s,i)=>s+i.amtUSD,0);
+  document.getElementById("dist-summary").innerHTML=`
+    <div class="kpi"><div class="kl">Pendiente de pago</div><div class="kv red">${fUSD(totalPending)}</div><div class="ks">a pagar ahora</div></div>
+    <div class="kpi"><div class="kl">Total pagado</div><div class="kv green">${fUSD(totalPaid)}</div><div class="ks">histórico</div></div>
+    <div class="kpi"><div class="kl">Próximo ciclo</div><div class="kv purple">${fUSD(nextTotal)}</div><div class="ks">estimado</div></div>`;
+}
+async function loadClients(){
+  const[clients]=await Promise.all([api("GET","/api/admin/clients")]);
+  if(!clients)return;
+  document.getElementById("clients-tbody").innerHTML=clients.map(c=>{
+    const hasBinance=c.binanceConnected||false;
+    const copyBadge=hasBinance
+      ?'<span class="badge b-on">🔗 Binance</span>'
+      :'<span class="badge b-off">⚠️ Sin API</span>';
+    return `<tr>
+    <td><strong>${c.name}</strong><div style="font-size:10px;color:var(--dim2)">${c.email}</div></td>
+    <td>${copyBadge}</td>
+    <td><span class="badge ${c.currency==="EUR"?"b-eur":"b-gold"}">${c.currency}</span> <span class="badge b-gold">${c.share||0}%</span></td>
+    <td>${fC(c.totalDepDisplay,c.currency)}</td>
+    <td style="color:var(--gold)">${fC(c.valueDisplay,c.currency)}</td>
+    <td style="color:${clr(c.pnlPct)};font-weight:600">${fP(c.pnlPct||0)}</td>
+    <td><span class="badge ${c.active?"b-on":"b-off"}">${c.active?"Activo":"Inactivo"}</span></td>
+    <td><button class="btn btn-outline" style="padding:3px 9px;font-size:10px" onclick="loadClientDetail('${c.id}')">Ver</button></td>
+  </tr>`;
+}).join("")||`<tr><td colspan="8" style="text-align:center;color:var(--dim);padding:20px">Sin clientes</td></tr>`;
+}
+
+async function loadClientDetail(clientId){
+  currentClientId=clientId;
+  const m=await api("GET",`/api/admin/clients/${clientId}/metrics`); if(!m)return;
+  showPage("client-detail");
+  const cur=m.client.currency;
+
+  document.getElementById("cd-name").textContent=m.client.name;
+  document.getElementById("cd-sub").textContent=`${m.client.email} · Desde ${fD(m.client.createdAt)} · ${cur}`;
+  document.getElementById("cd-val").textContent=fC(m.twr.currentValue,cur);
+  document.getElementById("cd-val-alt").textContent=`${fC(m.altValue,m.altCurrency)} ${m.altCurrency}`;
+  document.getElementById("cd-dep").textContent=fC(m.twr.totalDeposited,cur);
+  document.getElementById("cd-ndep").textContent=`${m.deposits.length} movimiento(s)`;
+
+  const pnlEl=document.getElementById("cd-pnl");
+  pnlEl.textContent=fC(m.twr.pnlAbs,cur); pnlEl.style.color=clr(m.twr.pnlAbs);
+  document.getElementById("cd-pnlpct").textContent=fP(m.twr.pnlPct);
+
+  const roiEl=document.getElementById("cd-roi");
+  roiEl.textContent=fP(m.twr.roiInitial||0); roiEl.style.color=clr(m.twr.roiInitial||0);
+  document.getElementById("cd-roi-sub").textContent=`vs aport. inicial ${fC(m.twr.firstDeposit,cur)}`;
+
+  // Participation ring
+  const share=m.client.share||0;
+  const circumference=2*Math.PI*35;
+  const dash=(share/100)*circumference;
+  document.getElementById("cd-part-ring").setAttribute("stroke-dasharray",`${dash} ${circumference}`);
+  document.getElementById("cd-part-pct").textContent=`${share}%`;
+  document.getElementById("cd-share-txt").textContent=`${share}% del fondo`;
+  document.getElementById("cd-first-dep").textContent=fC(m.twr.firstDeposit,cur);
+  document.getElementById("cd-dist-paid").textContent=fC(m.twr.totalDistPaid||0,cur);
+
+  // Distribución próxima
+  const ds=m.distSchedule;
+  const nextDistEl=document.getElementById("cd-next-dist");
+  if(ds&&ds.next&&m.client.distribution?.enabled){
+    nextDistEl.innerHTML=`
+      <div style="font-size:18px;font-weight:700;color:var(--purple)">${fC(ds.next.amtDisplay,ds.next.currency)}</div>
+      <div style="font-size:11px;color:var(--dim2);margin-top:4px">${fD(ds.next.date)} · ${ds.config.pct}% ${ds.config.baseType==="initial"?"de aport. inicial":"del valor actual"} · ${{monthly:"Mensual",quarterly:"Trimestral",annual:"Anual"}[ds.config.periodicity]||""}</div>`;
+  } else {
+    nextDistEl.innerHTML=`<div style="color:var(--dim);font-size:12px">Sin distribución configurada.<br><span style="color:var(--purple);cursor:pointer;font-size:11px" onclick="openDistConfig()">+ Configurar distribución</span></div>`;
+  }
+
+  // Timeline distribuciones
+  const tl=document.getElementById("cd-dist-timeline");
+  const past=(ds?.past||[]).slice().reverse();
+  if(!past.length&&!ds?.next){
+    tl.innerHTML=`<div style="color:var(--dim);font-size:11px;padding:8px">Sin distribuciones</div>`;
+  } else {
+    tl.innerHTML=past.map(p=>`
+      <div class="dist-item ${p.paid?"paid":"pending"}">
+        <div><div style="font-size:11px;font-weight:600">${fC(p.amtDisplay,p.currency)}</div><div style="font-size:9px;color:var(--dim2)">${fD(p.date)}</div></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="badge ${p.paid?"b-paid":"b-pending"}">${p.paid?"PAGADA":"PENDIENTE"}</span>
+          ${!p.paid?`<button class="btn btn-green" style="padding:2px 8px;font-size:9px" onclick="markPaid('${clientId}','${new Date(p.date).toISOString().slice(0,7)}')">✓</button>`:""}
+        </div>
+      </div>`).join("");
+  }
+
+  // Doble curva — canvas interactivo
+  const curves=m.curves;
+  if(curves){ drawClientCanvas(curves.withoutDist, curves.withDist); }
+
+  renderPeriods("cd-prow","cd-pd",m.periods);
+  renderMonthly("cd-mg",m.monthly,cur);
+
+  // Depósitos
+  const all=[...m.deposits.map(d=>({...d,tipo:"Depósito"})),...(m.withdrawals||[]).map(w=>({...w,amount:-w.amount,tipo:"Retirada"}))].sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  document.getElementById("cd-dep-tbody").innerHTML=all.map(d=>`<tr><td>${fD(d.ts)}</td><td><span class="badge ${d.tipo==="Depósito"?"b-on":"b-off"}">${d.tipo}</span></td><td style="color:${clr(d.amount)};font-weight:600">${fC(Math.abs(d.amount),d.currency)}</td><td><span class="badge ${d.currency==="EUR"?"b-eur":"b-gold"}">${d.currency}</span></td><td style="color:var(--dim2)">${d.note||"—"}</td><td>${d.tipo==="Depósito"?`<button class="btn btn-danger" style="padding:2px 7px;font-size:9px" onclick="removeDeposit('${d.id}')">✕</button>`:""}</td></tr>`).join("")||`<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:14px">Sin movimientos</td></tr>`;
+
+  document.getElementById("cd-url").textContent=window.location.origin;
+  document.getElementById("cd-id").textContent=clientId;
+}
+
+async function loadMovements(){
+  const clients=await api("GET","/api/admin/clients"); if(!clients)return;
+  const all=[];
+  for(const c of clients){const m=await api("GET",`/api/admin/clients/${c.id}/metrics`);if(!m)continue;m.deposits.forEach(d=>all.push({...d,cn:c.name,tipo:"Depósito"}));(m.withdrawals||[]).forEach(w=>all.push({...w,amount:-w.amount,cn:c.name,tipo:"Retirada"}));}
+  all.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  document.getElementById("mov-tbody").innerHTML=all.map(d=>`<tr><td>${fD(d.ts)}</td><td>${d.cn}</td><td><span class="badge ${d.tipo==="Depósito"?"b-on":"b-off"}">${d.tipo}</span></td><td style="color:${clr(d.amount)};font-weight:600">${fC(Math.abs(d.amount),d.currency)}</td><td><span class="badge ${d.currency==="EUR"?"b-eur":"b-gold"}">${d.currency}</span></td><td style="color:var(--dim2)">${d.note||"—"}</td></tr>`).join("")||`<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:20px">Sin movimientos</td></tr>`;
+}
+
+// ── Actions ──
+async function createClient(){
+  const name=document.getElementById("nc-name").value.trim(),email=document.getElementById("nc-email").value.trim(),pw=document.getElementById("nc-pw").value;
+  if(!name||!email||!pw){showMsg("nc-msg","Rellena campos obligatorios","var(--red)");return;}
+  const r=await api("POST","/api/admin/clients",{name,email,password:pw,currency:document.getElementById("nc-cur").value,phone:document.getElementById("nc-phone").value,notes:document.getElementById("nc-notes").value,depositMode:document.getElementById("nc-mode").value});
+  if(r?.id){closeModal("modal-new-client");showPage("clients");}else showMsg("nc-msg","Error","var(--red)");
+}
+
+let depTypeM="deposit";
+function openDepModal(type){
+  depTypeM=type;
+  document.getElementById("dep-mt").textContent=type==="deposit"?"Añadir depósito":"Registrar retirada";
+  document.getElementById("dep-submit").textContent=type==="deposit"?"Añadir":"Registrar";
+  document.getElementById("dep-date").value=new Date().toISOString().slice(0,10);
+  openModal("modal-deposit");
+}
+async function submitDeposit(){
+  const amount=+document.getElementById("dep-amount").value,currency=document.getElementById("dep-cur").value,ts=new Date(document.getElementById("dep-date").value).toISOString(),note=document.getElementById("dep-note").value;
+  if(!amount)return;
+  const url=depTypeM==="deposit"?`/api/admin/clients/${currentClientId}/deposits`:`/api/admin/clients/${currentClientId}/withdrawals`;
+  await api("POST",url,{amount,currency,ts,note});
+  closeModal("modal-deposit");loadClientDetail(currentClientId);
+}
+async function removeDeposit(id){if(!confirm("¿Eliminar?"))return;await api("DELETE",`/api/admin/clients/${currentClientId}/deposits/${id}`);loadClientDetail(currentClientId);}
+
+function openEditShare(){document.getElementById("es-share").value=document.getElementById("cd-share-txt").textContent.replace("%","").replace(" del fondo","");openModal("modal-edit-share");}
+async function saveShare(){await api("PUT",`/api/admin/clients/${currentClientId}`,{share:+document.getElementById("es-share").value,currency:document.getElementById("es-cur").value});closeModal("modal-edit-share");loadClientDetail(currentClientId);}
+
+function copyAccess(){navigator.clipboard.writeText(`URL: ${window.location.origin}\nID: ${currentClientId}`);alert("Copiado");}
+
+// Distribution config
+let distCfg={enabled:false,pct:0,baseType:"initial",periodicity:"monthly",currency:"USD"};
+async function openDistConfig(){
+  const m=await api("GET",`/api/admin/clients/${currentClientId}/metrics`); if(!m)return;
+  distCfg=m.client.distribution||{enabled:false,pct:0,baseType:"initial",periodicity:"monthly",currency:m.client.currency};
+  distEnabled=distCfg.enabled||false;
+  const tog=document.getElementById("dist-toggle");
+  tog.classList.toggle("on",distEnabled);
+  document.getElementById("dist-pct").value=distCfg.pct||"";
+  document.getElementById("dist-period").value=distCfg.periodicity||"monthly";
+  document.getElementById("dist-base").value=distCfg.baseType||"initial";
+  document.getElementById("dist-cur").value=distCfg.currency||"USD";
+  updateDistPreview(m.twr.firstDeposit,m.twr.currentValue,m.client.currency);
+  openModal("modal-dist-config");
+}
+function toggleDist(){distEnabled=!distEnabled;document.getElementById("dist-toggle").classList.toggle("on",distEnabled);}
+function updateDistPreview(firstDep,curVal,cur){
+  const pct=+document.getElementById("dist-pct").value||0;
+  const base=document.getElementById("dist-base").value;
+  const period=document.getElementById("dist-period").value;
+  const baseAmt=base==="initial"?firstDep:curVal;
+  const payment=baseAmt*(pct/100);
+  const periodLabel={monthly:"mes",quarterly:"trimestre",annual:"año"}[period]||"período";
+  document.getElementById("dist-preview").innerHTML=pct>0?`Pago estimado: <strong style="color:var(--purple)">${fC(payment,cur)}</strong> por ${periodLabel} (${pct}% de ${fC(baseAmt,cur)})`:"Define el porcentaje para ver la estimación.";
+}
+async function saveDist(){
+  const cfg={enabled:distEnabled,pct:+document.getElementById("dist-pct").value,baseType:document.getElementById("dist-base").value,periodicity:document.getElementById("dist-period").value,currency:document.getElementById("dist-cur").value};
+  await api("PUT",`/api/admin/clients/${currentClientId}/distribution`,cfg);
+  closeModal("modal-dist-config");loadClientDetail(currentClientId);
+}
+async function markPaid(clientId,periodDate){
+  await api("POST",`/api/admin/clients/${clientId}/distributions/pay`,{periodDate});
+  loadClientDetail(clientId);loadDistributions();
+}
+
+async function changeAdminPw(){
+  const pw=document.getElementById("new-pw").value,pw2=document.getElementById("new-pw2").value;
+  if(pw!==pw2){showMsg("pw-msg","No coinciden","var(--red)");return;}
+  await api("POST","/api/admin/password",{newPassword:pw});
+  showMsg("pw-msg","Cambiada correctamente","var(--green)");
+}
+
+// ── SEGURIDAD ─────────────────────────────────────────────────────────────────
+let _2faSetupSecret = "";
+
+async function loadSettings() {
+  // Estado 2FA
+  const status = await api("GET","/api/admin/2fa/setup");
+  render2FAStatus(status?.status);
+  // IPs
+  loadIPs();
+  // Audit log
+  loadAuditLog();
+  // Session countdown
+  startSessionCountdown();
+}
+
+function render2FAStatus(status) {
+  const el = document.getElementById("twofa-status");
+  if (!el) return;
+  if (status?.enabled) {
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="badge b-on">✅ ACTIVADO</span><span style="font-size:11px;color:var(--dim2)">Tu cuenta está protegida con 2FA</span></div>`;
+    document.getElementById("twofa-disable").style.display = "";
+    document.getElementById("twofa-setup").style.display   = "none";
+  } else {
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="badge b-off">❌ DESACTIVADO</span><span style="font-size:11px;color:var(--dim2)">Activa 2FA para mayor seguridad</span></div><button class="btn btn-gold" onclick="setup2FA()">Activar 2FA</button>`;
+    document.getElementById("twofa-disable").style.display = "none";
+  }
+}
+
+async function setup2FA() {
+  const d = await api("GET","/api/admin/2fa/setup");
+  if (!d) return;
+  _2faSetupSecret = d.secret;
+  document.getElementById("twofa-qr").src = d.qrUrl;
+  document.getElementById("twofa-secret").textContent = d.secret;
+  document.getElementById("twofa-setup").style.display = "";
+  document.getElementById("twofa-status").innerHTML = "";
+}
+
+async function confirm2FA() {
+  const code = document.getElementById("twofa-code").value.trim();
+  if (!code) return;
+  const r = await api("POST","/api/admin/2fa/enable",{secret:_2faSetupSecret, code});
+  if (r?.ok) {
+    showMsg("twofa-msg","✅ 2FA activado. Guarda tu app de autenticación.","var(--green)");
+    setTimeout(()=>loadSettings(),2000);
+  } else {
+    showMsg("twofa-msg","Código incorrecto. Inténtalo de nuevo.","var(--red)");
+  }
+}
+
+function cancel2FASetup() {
+  document.getElementById("twofa-setup").style.display="none";
+  loadSettings();
+}
+
+async function disable2FA() {
+  const code = document.getElementById("twofa-disable-code").value.trim();
+  if (!code) return;
+  const r = await api("POST","/api/admin/2fa/disable",{code});
+  if (r?.ok) loadSettings();
+  else showMsg("twofa-msg","Código incorrecto","var(--red)");
+}
+
+async function loadIPs() {
+  const ips = await api("GET","/api/admin/security/ips");
+  const el  = document.getElementById("ip-list");
+  if (!el) return;
+  if (!ips?.length) { el.innerHTML=`<div style="font-size:11px;color:var(--dim);margin-bottom:8px">Sin restricción de IP — cualquier IP puede acceder</div>`; return; }
+  el.innerHTML = ips.map(e=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px">
+    <span style="color:var(--text)">${e.ip}</span>
+    <span style="color:var(--dim2)">${e.label||""}</span>
+    <button class="btn btn-danger" style="padding:2px 8px;font-size:9px" onclick="removeIP('${e.ip}')">✕</button>
+  </div>`).join("");
+}
+
+async function addMyIP() {
+  const d = await api("GET","/api/admin/security/myip");
+  if (d?.ip) document.getElementById("ip-input").value = d.ip;
+}
+
+async function addIP() {
+  const ip=document.getElementById("ip-input").value.trim();
+  const label=document.getElementById("ip-label").value.trim();
+  if (!ip) return;
+  await api("POST","/api/admin/security/ips",{ip,label});
+  document.getElementById("ip-input").value="";
+  document.getElementById("ip-label").value="";
+  loadIPs();
+}
+
+async function removeIP(ip) {
+  if (!confirm(`¿Eliminar la IP ${ip}?`)) return;
+  await api("DELETE",`/api/admin/security/ips/${encodeURIComponent(ip)}`);
+  loadIPs();
+}
+
+async function loadAuditLog() {
+  const logs = await api("GET","/api/admin/audit?n=50");
+  const el   = document.getElementById("audit-log");
+  if (!el || !logs?.length) return;
+  const colors = { LOGIN_OK:"var(--green)", LOGIN_FAIL:"var(--red)", "2FA_FAIL":"var(--red)", LOGIN_OK_2FA:"var(--green)", SECURITY:"var(--red)", IP_BLOCKED:"var(--red)", ACTION:"var(--dim2)", API_ACCESS:"var(--dim)", DEFAULT:"var(--dim2)" };
+  el.innerHTML = logs.map(l=>{
+    const c = colors[l.type]||colors.DEFAULT;
+    const ts = new Date(l.ts).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    return `<div style="padding:3px 0;border-bottom:1px solid var(--border);display:flex;gap:8px"><span style="color:var(--dim)">${ts}</span><span style="color:${c}">${l.type}</span><span style="color:var(--dim2)">${l.path||""}</span><span style="color:var(--dim)">${l.ip||""}</span></div>`;
+  }).join("");
+}
+
+// Session countdown
+let sessionTimer = null;
+async function startSessionCountdown() {
+  if (sessionTimer) clearInterval(sessionTimer);
+  sessionTimer = setInterval(async () => {
+    const me = await api("GET","/api/auth/me");
+    if (!me) return;
+    if (me.warnExpiry) {
+      const mins = Math.floor(me.expiresInMs / 60000);
+      const secs = Math.floor((me.expiresInMs % 60000) / 1000);
+      document.getElementById("session-warning").style.display = "flex";
+      document.getElementById("session-countdown").textContent = `${mins}:${String(secs).padStart(2,"0")}`;
+    } else {
+      document.getElementById("session-warning").style.display = "none";
+    }
+  }, 30000);
+}
+
+async function renewSession() {
+  await api("POST","/api/auth/renew");
+  document.getElementById("session-warning").style.display = "none";
+}
+
+function openModal(id){document.getElementById(id).classList.add("open");}
+function closeModal(id){document.getElementById(id).classList.remove("open");}
+function showMsg(id,msg,color){const el=document.getElementById(id);if(el){el.textContent=msg;el.style.color=color;el.style.display="block";}}
+
+async function saveAlertConfig(){
+  const cfg={
+    winPct:+document.getElementById("alert-win").value||3,
+    lossPct:+document.getElementById("alert-loss").value||3,
+    paperWinPct:+document.getElementById("alert-paper-win").value||5,
+    paperLossPct:+document.getElementById("alert-paper-loss").value||4,
+  };
+  const r=await api("POST","/api/admin/alert-config",cfg);
+  if(r&&r.ok) showToast("✅ Alertas guardadas","success");
+  else showToast("Error guardando alertas","error");
+}
+
+async function loadAlertConfig(){
+  const r=await api("GET","/api/admin/alert-config");
+  if(!r) return;
+  if(document.getElementById("alert-win")) document.getElementById("alert-win").value=r.winPct||3;
+  if(document.getElementById("alert-loss")) document.getElementById("alert-loss").value=r.lossPct||3;
+  if(document.getElementById("alert-paper-win")) document.getElementById("alert-paper-win").value=r.paperWinPct||5;
+  if(document.getElementById("alert-paper-loss")) document.getElementById("alert-paper-loss").value=r.paperLossPct||4;
+}
+
+async function saveManagerCapital(){
+  const amount=+document.getElementById("mc-amount").value;
+  const currency=document.getElementById("mc-currency").value;
+  const note=document.getElementById("mc-note").value;
+  if(!amount||amount<=0){showToast("Introduce un importe válido","error");return;}
+
+  const btn=document.querySelector("#modal-manager-capital .btn-gold");
+  if(btn){btn.textContent="Verificando...";btn.disabled=true;}
+  try {
+    // Usar api() que maneja auth correctamente
+    const r = await api("POST","/api/admin/manager-capital",{amount,currency,note});
+    if(r && r.ok){
+      const infoEl=document.getElementById("mc-balance-info");
+      if(infoEl) infoEl.remove();
+      closeModal("modal-manager-capital");
+      showToast("✅ Capital aportado: "+amount.toLocaleString("es-ES")+" "+currency,"success");
+      loadOverview();
+    } else if(r && r.error){
+      showToast("❌ "+r.error,"error");
+      if(r.realBalance!==undefined){
+        const info=document.getElementById("mc-balance-info")||document.createElement("div");
+        info.id="mc-balance-info";
+        info.style.cssText="color:#c0392b;font-size:11px;margin-top:8px;padding:8px;background:rgba(192,57,43,0.1);border-radius:4px;";
+        info.innerHTML="Balance en Binance: <b>$"+r.realBalance+"</b> · Declaras: <b>$"+r.required+"</b><br>Añade más USDC a Binance primero.";
+        document.getElementById("mc-note").parentNode.appendChild(info);
+      }
+    } else {
+      showToast("Error al guardar capital","error");
+    }
+  } catch(e){
+    showToast("Error de conexión: "+e.message,"error");
+  } finally {
+    if(btn){btn.textContent="Guardar";btn.disabled=false;}
+  }
+}
+
+function showToast(msg, type="info"){
+  const t=document.createElement("div");
+  const colors={success:"#1a7a4a",error:"#c0392b",info:"#c9a84c"};
+  t.style.cssText=`position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:6px;background:${colors[type]||colors.info};color:#fff;font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:opacity .3s;max-width:320px;`;
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity="0";setTimeout(()=>t.remove(),400);},3500);
+}
+
+if(!token){ window.location.href="/"; }
+else {
+  // Page load with existing token: run full init
+  (async () => {
+    try {
+      await loadOverview();
+      loadAlertConfig && loadAlertConfig();
+      loadLiveBalances && loadLiveBalances();
+      setInterval(()=>{ loadOverview(); loadLiveBalances && loadLiveBalances(); }, 30000);
+    } catch(e) { console.error("Init error:", e); }
+  })();
+}
+
+
+// ── Estado depósitos ──────────────────────────────────────────────────────────
+let pendingDeposits = [];
+let currentDepositId = null;
+
+// ── Cargar pendientes del servidor al abrir la página ─────────────────────────
+async function loadPendingDeposits() {
+  try {
+    const r = await apiFetch("/api/admin/deposits/pending");
+    if (r.pending?.length) {
+      pendingDeposits = r.pending;
+      showDepositBadge();
+      // Abrir popup automáticamente si hay pendientes
+      const next = pendingDeposits.find(d => !d.distributed);
+      if (next && !document.getElementById("modal-deposit-dist").classList.contains("open")) {
+        openDepositModal(next);
+      }
+    }
+  } catch {}
+}
+
+// ── WebSocket para notificaciones en tiempo real ──────────────────────────────
+(function initDepositWS() {
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  const ws = new WebSocket(`${proto}//${location.host}`);
+  ws.onmessage = e => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === "new_deposit") {
+        // Evitar duplicados
+        if (!pendingDeposits.find(d => d.id === msg.deposit.id)) {
+          pendingDeposits.push(msg.deposit);
+        }
+        showDepositBadge();
+        if (!document.getElementById("modal-deposit-dist").classList.contains("open")) {
+          openDepositModal(msg.deposit);
+        }
+      }
+    } catch {}
+  };
+  ws.onclose = () => setTimeout(initDepositWS, 5000);
+  ws.onerror = () => {};
+})();
+
+// Cargar al inicio (tras que el DOM esté listo y la sesión activa)
+window.addEventListener("load", () => setTimeout(loadPendingDeposits, 1500));
+
+function showDepositBadge() {
+  const badge = document.getElementById("deposit-alert-badge");
+  const count = document.getElementById("dep-badge-count");
+  const n = pendingDeposits.filter(d => !d.distributed).length;
+  if (n > 0) { count.textContent = n; badge.style.display = "flex"; }
+  else badge.style.display = "none";
+}
+
+function openPendingDeposit() {
+  const next = pendingDeposits.find(d => !d.distributed);
+  if (next) openDepositModal(next);
+}
+
+function openDepositModal(dep) {
+  currentDepositId = dep.id;
+  const amountUSD = dep.amountUSD || dep.amount;
+
+  document.getElementById("dep-amount-label").textContent =
+    `${dep.amount} ${dep.asset} ≈ $${parseFloat(amountUSD).toFixed(2)}`;
+  document.getElementById("dep-txid").textContent = dep.txId || "—";
+  document.getElementById("dep-remaining").textContent = `$${parseFloat(amountUSD).toFixed(2)} por asignar`;
+
+  // Limpiar filas y mensaje
+  document.getElementById("dep-dist-rows").innerHTML = "";
+  document.getElementById("dep-dist-msg").textContent = "";
+
+  // Fila inicial: todo al admin
+  addDepDistRow("admin", parseFloat(amountUSD));
+  updateDepTotal();
+
+  document.getElementById("modal-deposit-dist").classList.add("open");
+}
+
+function getClients() {
+  return window._clientsCache || [];
+}
+
+function addDepDistRow(targetVal = "", amountVal = "") {
+  const row = document.createElement("div");
+  row.className = "dep-row";
+
+  const sel = document.createElement("select");
+  sel.innerHTML = `<option value="admin">👤 Yo (admin)</option>` +
+    getClients().map(c => `<option value="${c.id}">${c.name}</option>`).join("") +
+    `<option value="__new__">➕ Nuevo cliente…</option>`;
+  if (targetVal) sel.value = targetVal;
+  sel.onchange = () => {
+    if (sel.value === "__new__") {
+      closeModal("modal-deposit-dist");
+      openModal("modal-new-client");
+    }
+  };
+
+  const inp = document.createElement("input");
+  inp.type = "number"; inp.min = "0"; inp.step = "0.01";
+  inp.placeholder = "USD";
+  if (amountVal) inp.value = parseFloat(amountVal).toFixed(2);
+  inp.oninput = updateDepTotal;
+
+  const btn = document.createElement("button");
+  btn.textContent = "✕";
+  btn.onclick = () => { row.remove(); updateDepTotal(); };
+
+  row.appendChild(sel); row.appendChild(inp); row.appendChild(btn);
+  document.getElementById("dep-dist-rows").appendChild(row);
+}
+
+function updateDepTotal() {
+  const dep = pendingDeposits.find(d => d.id === currentDepositId);
+  const total = dep ? parseFloat(dep.amountUSD || dep.amount) : 0;
+  let assigned = 0;
+  document.querySelectorAll("#dep-dist-rows .dep-row input").forEach(i => {
+    assigned += parseFloat(i.value) || 0;
+  });
+  const el = document.getElementById("dep-total-assigned");
+  el.textContent = `$${assigned.toFixed(2)} / $${total.toFixed(2)}`;
+  el.style.color = Math.abs(assigned - total) < 0.02 ? "var(--green)" : "var(--gold)";
+  document.getElementById("dep-remaining").textContent =
+    `$${Math.max(0, total - assigned).toFixed(2)} por asignar`;
+}
+
+async function confirmDistribution() {
+  const msgEl = document.getElementById("dep-dist-msg");
+  const distribution = [];
+  let hasError = false;
+  document.querySelectorAll("#dep-dist-rows .dep-row").forEach(row => {
+    const sel = row.querySelector("select");
+    const inp = row.querySelector("input");
+    const amt = parseFloat(inp?.value);
+    if (!amt || amt <= 0) { hasError = true; return; }
+    distribution.push({ target: sel.value, amountUSD: amt });
+  });
+  if (hasError || !distribution.length) {
+    msgEl.textContent = "Revisa los importes — todos deben ser > 0.";
+    msgEl.style.color = "var(--red)"; return;
+  }
+
+  try {
+    const r = await apiFetch("/api/admin/deposits/distribute", "POST", {
+      depositId: currentDepositId, distribution
+    });
+    if (r.ok) {
+      // Marcar como distribuido localmente
+      const dep = pendingDeposits.find(d => d.id === currentDepositId);
+      if (dep) dep.distributed = true;
+      showDepositBadge();
+      closeModal("modal-deposit-dist");
+      if (typeof loadOverview === "function") loadOverview();
+      // Abrir siguiente pendiente si hay
+      setTimeout(() => {
+        const next = pendingDeposits.find(d => !d.distributed);
+        if (next) openDepositModal(next);
+      }, 600);
+    } else {
+      msgEl.textContent = r.error || "Error al distribuir";
+      msgEl.style.color = "var(--red)";
+    }
+  } catch(e) {
+    msgEl.textContent = "Error de conexión";
+    msgEl.style.color = "var(--red)";
+  }
+}
+
+async function skipDeposit() {
+  // No marca como distribuido — seguirá apareciendo al recargar
+  closeModal("modal-deposit-dist");
+  // Mover al siguiente si hay más pendientes
+  const remaining = pendingDeposits.filter(d => !d.distributed && d.id !== currentDepositId);
+  if (remaining.length) {
+    setTimeout(() => openDepositModal(remaining[0]), 400);
+  }
+}
+
+// Cachear clientes cuando se carguen en el panel
+const _origSetClients = window.setClients;
+async function _cacheClients() {
+  try {
+    const r = await apiFetch("/api/admin/clients");
+    window._clientsCache = (r.clients || r || []).filter(c => c.active !== false);
+  } catch {}
+}
+window.addEventListener("load", () => setTimeout(_cacheClients, 800));
+
+// Auto-refresh cada 60s — detecta cambios de capital y actualiza overview
+let _lastBalance = null;
+setInterval(async () => {
+  if (typeof _isLoggedIn !== "undefined" && !_isLoggedIn) return;
+  try {
+    const d = await api("GET", "/api/admin/metrics");
+    if (!d) return;
+    const cur = d.balanceUSD || 0;
+    if (_lastBalance !== null && cur > _lastBalance + 1) {
+      if (typeof showToast === "function")
+        showToast("💰 Capital actualizado: +" + (cur - _lastBalance).toFixed(2) + " USD", "success");
+      if (typeof loadOverview === "function") loadOverview();
+    }
+    _lastBalance = cur;
+  } catch(e) {}
+}, 60000);
+
+
+
+// ── Period filter for equity chart ──────────────────────────────────────────
+let _eqPeriod = "1D";
+function setEqPeriod(period, btn) {
+  _eqPeriod = period;
+  document.querySelectorAll("#eq-period-btns .cbt").forEach(b=>b.classList.remove("active"));
+  if(btn) btn.classList.add("active");
+  if(_botStatus) renderBotCurves(_botStatus);
+}
+
+// ── Bot view fix: handle new button IDs ────────────────────────────────────
+const _origSetBotView = setBotView;
+function setBotView(view, btn) {
+  _currentBotView = view;
+  // Clear all bot view buttons
+  document.querySelectorAll("#btn-show-live,#btn-show-paper,#btn-show-both").forEach(b=>b.classList.remove("active"));
+  if(btn) btn.classList.add("active");
+  if(_botStatus) renderBotCurves(_botStatus);
+  if(window._lastLiveStatus) renderBotKPIs(window._lastLiveStatus, view);
+}
+
+// ── Period-aware renderBotCurves ────────────────────────────────────────────
+const _origRenderBotCurves = renderBotCurves;
+function renderBotCurves(bs) {
+  if(!bs) return;
+  const now = Date.now();
+  const periodMs = {
+    "1D": 86400000, "1W": 7*86400000, "1M": 30*86400000,
+    "1Y": 365*86400000, "ALL": Infinity
+  }[_eqPeriod] || 86400000;
+
+  // Filter equity data by period
+  const filterByTime = (arr) => {
+    if(!arr?.length) return arr||[];
+    if(periodMs === Infinity) return arr;
+    return arr.filter(p => {
+      const t = p.ts ? new Date(p.ts).getTime() : (p.t||0);
+      return (now - t) <= periodMs;
+    });
+  };
+
+  const filteredBs = {
+    live:  filterByTime(bs.live),
+    paper: filterByTime(bs.paper),
+  };
+  _origRenderBotCurves(filteredBs);
+}
+
+// ── Enhanced loadOverview: populate new metric cards ────────────────────────
+const _origLoadOverview = loadOverview;
+async function loadOverview() {
+  await _origLoadOverview();
+  // Populate new bot status cards from _lastLiveStatus (already set by original)
+  const ls = window._lastLiveStatus;
+  if(!ls) {
+    // Fallback: fetch directly if not yet set
+    try {
+      const lsFresh = await api("GET", "/api/bots/live-status");
+      if(lsFresh) window._lastLiveStatus = lsFresh;
+    } catch(e) {}
+    if(!window._lastLiveStatus) return;
+  }
+  const lsData = window._lastLiveStatus;
+  const lv = lsData.live||{}, ps = lsData.paper||{};
+
+  // Show/hide offline badge
+  const offlineBadge = lv.offline||ps.offline;
+  const warnEl2 = document.getElementById("env-vars-warning");
+  if(warnEl2) warnEl2.style.display = offlineBadge ? "block" : "none";
+
+  // Live card
+  const lvTV = lv.totalValue||0, lvRet = lv.returnPct||0;
+  const el_ltv = document.getElementById("live-tv");
+  if(el_ltv){ el_ltv.textContent=lv.offline?"Sin datos":"$"+lvTV.toFixed(2); el_ltv.style.color=lv.offline?"var(--dim2)":"var(--gold)"; }
+  const el_lret = document.getElementById("live-ret");
+  if(el_lret){ el_lret.textContent=(lvRet>=0?"+":"")+lvRet.toFixed(2)+"%"; el_lret.style.color=lvRet>=0?"var(--green)":"var(--red)"; }
+  const el_lwr = document.getElementById("live-wr");
+  if(el_lwr){ el_lwr.textContent=(lv.winRate||0)+"%"; el_lwr.style.color=(lv.winRate||0)>=50?"var(--green)":"var(--red)"; }
+  const el_lreg = document.getElementById("live-regime");
+  if(el_lreg) el_lreg.textContent=lv.marketRegime||"—";
+  const el_lbadge = document.getElementById("live-mode-badge");
+  if(el_lbadge) el_lbadge.textContent=lv.instance||"—";
+  const el_ldot = document.getElementById("live-dot");
+  if(el_ldot) el_ldot.className="dot "+(lv.offline?"dot-offline":lv.instance==="LIVE"?"dot-live":"dot-paper");
+
+  // Paper card
+  const psTV = ps.totalValue||0, psRet = ps.returnPct||0;
+  const psTrades = (ps.log||[]).filter(l=>l.type==="SELL").length;
+  const el_ptv = document.getElementById("paper-tv");
+  if(el_ptv){ el_ptv.textContent=ps.offline?"Sin datos":"$"+psTV.toFixed(2); el_ptv.style.color=ps.offline?"var(--dim2)":"var(--gold)"; }
+  const el_pret = document.getElementById("paper-ret");
+  if(el_pret){ el_pret.textContent=(psRet>=0?"+":"")+psRet.toFixed(2)+"%"; el_pret.style.color=psRet>=0?"var(--green)":"var(--red)"; }
+  const el_pwr = document.getElementById("paper-wr");
+  if(el_pwr){ el_pwr.textContent=(ps.winRate||0)+"%"; el_pwr.style.color=(ps.winRate||0)>=50?"var(--green)":"var(--red)"; }
+  const el_ptr = document.getElementById("paper-trades");
+  if(el_ptr) el_ptr.textContent=psTrades+" trades";
+  const el_pdot = document.getElementById("paper-dot");
+  if(el_pdot) el_pdot.className="dot dot-paper";
+
+  // My capital
+  const el_mc = document.getElementById("ov-mycap");
+  if(el_mc && window._lastMetrics) {
+    const mc = window._lastMetrics.managerCapital;
+    el_mc.textContent = mc?.amount>0 ? "$"+(window._lastMetrics.managerCapitalUSD||0).toFixed(2) : "—";
+    // Store fxRate globally for EUR conversions
+    window._fxRate = window._lastMetrics.fxRate || 1.08;
+  }
+
+  // F&G
+  const fg = lv.fearGreed??ps.fearGreed;
+  const fgSrc = lv.fearGreedSource||ps.fearGreedSource;
+  const el_fg = document.getElementById("ov-fg");
+  const el_fgs = document.getElementById("ov-fg-source");
+  if(el_fg&&fg!=null){ el_fg.textContent=fg; el_fg.style.color=fg<25?"var(--red)":fg>75?"var(--green)":"var(--gold)"; }
+  if(el_fgs) el_fgs.textContent=fgSrc||"alternative.me";
+
+  // Render recent trades
+  renderRecentTrades();
+}
+
+// Store metrics for capital display
+const _origOvLoad = loadOverview;
+
+// ── Bot stats page ──────────────────────────────────────────────────────────
+async function loadBotStats() {
+  const ls = window._lastLiveStatus || await api("GET","/api/bots/live-status");
+  if(!ls) return;
+  const ps = ls.paper||{};
+  const ql = ps.qLearningStats||{}, dq = ps.dqnStats||{};
+
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set("bs-qstates", (ql.states||0).toLocaleString());
+  set("bs-epsilon", ((ql.epsilon||0)*100).toFixed(1)+"%");
+  set("bs-replay", (ql.replayBuffer||0)+"/200");
+  set("bs-dqn-updates", (dq.totalUpdates||0).toLocaleString());
+  set("bs-dqn-loss", dq.avgLoss!=null?dq.avgLoss.toFixed(5):"—");
+  set("bs-dqn-buf", (dq.replaySize||0)+"/500");
+
+  const ma = ps.multiAgentStats||{};
+  const tbody = document.querySelector("#bs-agents-table tbody");
+  if(tbody) tbody.innerHTML = Object.entries(ma.agents||{}).map(([r,a])=>`
+    <tr>
+      <td style="font-weight:600;color:${{BULL:"var(--green)",BEAR:"var(--red)",LATERAL:"var(--gold)",UNKNOWN:"var(--dim2)"}[r]}">${r}</td>
+      <td>${a.trades||0}</td>
+      <td style="color:${(a.winRate||0)>=50?"var(--green)":"var(--red)"}">${a.winRate||0}%</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${a.dqn?.epsilon!=null?((a.dqn.epsilon)*100).toFixed(1)+"%":"—"}</td>
+      <td><span class="badge ${a.active?"b-on":"b-off"}">${a.active?"ACTIVO":"INACTIVO"}</span></td>
+    </tr>`).join("")||'<tr><td colspan="5" class="empty-state">Sin datos aún</td></tr>';
+
+  try {
+    const shadow = await api("GET","/api/shadow/status");
+    if(shadow) {
+      set("sh-observed", shadow.totalObserved||0);
+      set("sh-adopted", shadow.totalAdopted||0);
+      set("sh-rejected", shadow.totalRejected||0);
+      set("sh-active", (shadow.activeCount||0)+" señales");
+      const sigs = shadow.signals||{};
+      const sigHtml = Object.entries(sigs).filter(([,v])=>v.total>=2)
+        .sort((a,b)=>b[1].wr-a[1].wr)
+        .map(([k,v])=>`<div class="shadow-row" style="border-top:1px solid var(--border);padding-top:6px;margin-top:4px">
+          <span class="shadow-key">${k}</span>
+          <span class="shadow-val ${v.adopted?"shadow-adopted":"shadow-pending"}">WR ${v.wr}% (${v.total} obs) ${v.adopted?"✅":"⏳"}</span>
+        </div>`).join("");
+      const el_sl = document.getElementById("sh-signals-list");
+      if(el_sl) el_sl.innerHTML = sigHtml||'<div class="empty-state">Sin señales suficientes aún</div>';
+    }
+  } catch(e) {}
+
+  const se = ps.stratEvalStats||{};
+  const wGrid = document.getElementById("strat-weights-grid");
+  if(wGrid) wGrid.innerHTML = Object.entries(se.weights||{}).map(([s,w])=>`
+    <div class="bm"><div class="bm-l">${s}</div>
+    <div class="bm-v" style="color:${w>1?"var(--green)":w<0.8?"var(--red)":"var(--text)"}">×${w.toFixed(2)}</div></div>`).join("");
+}
+
+// ── Enhanced showPage ────────────────────────────────────────────────────────
+function showPage(id, btn) {
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  const el = document.getElementById("page-"+id);
+  if(el) el.classList.add("active");
+  document.querySelectorAll(".ni").forEach(n=>n.classList.remove("active"));
+  if(btn) btn.classList.add("active");
+  const titles = {overview:"Resumen global",performance:"Rendimiento",bots:"Estado de los bots",
+    clients:"Clientes",distributions:"Distribuciones",movements:"Movimientos",settings:"Ajustes"};
+  const ttEl = document.getElementById("page-title");
+  if(ttEl) ttEl.textContent = titles[id]||id;
+  if(id==="bots") loadBotStats();
+  if(id==="settings"){ loadSettings(); loadAlertConfig(); }
+  if(id==="clients") loadClients();
+  if(id==="distributions") loadDistributions();
+  if(id==="movements") loadMovements();
+  if(id==="performance") loadPerformance();
+}
+
+// // ── Login ──────────────────────────────────────────────────────────────────// ── Login ──────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const pw = document.getElementById("login-pw").value;
+  const err = document.getElementById("login-err");
+  if (!pw) return;
+  const r = await fetch("/api/auth/admin", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({password:pw})
+  }).then(r=>r.json()).catch(()=>null);
+  if (r?.require2FA) {
+    // 2FA required - redirect to shared login for 2FA flow
+    localStorage.setItem("bafir_2fa_temp", r.tempToken);
+    window.location.href = "/";
+    return;
+  }
+  if (r?.token) {
+    token = r.token;
+    localStorage.setItem("bafir_token", token);
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app").style.display = "flex";
+    init();
+  } else {
+    err.textContent = r?.error || "Contraseña incorrecta";
+    setTimeout(()=>err.textContent="", 3000);
+  }
+}
+
+async function init() {
+  startSessionCountdown();
+  await loadOverview();
+  loadAlertConfig();
+  loadLiveBalances();
+  initDepositWS && initDepositWS();
+  // Auto-refresh every 30s
+  setInterval(()=>{ loadOverview(); loadLiveBalances(); }, 30000);
+}
+
+// ── Recent trades with $ amounts ────────────────────────────────────────────
+let _tradesView = "live";
+function setTradesView(view, btn) {
+  _tradesView = view;
+  document.querySelectorAll(".chart-card .cbt").forEach(b=>{
+    if(b.onclick && b.onclick.toString().includes("setTradesView")) b.classList.remove("active");
+  });
+  if(btn) btn.classList.add("active");
+  renderRecentTrades();
+}
+
+function renderRecentTrades() {
+  const el = document.getElementById("recent-trades-content");
+  if(!el || !window._lastLiveStatus) return;
+  const ls = window._lastLiveStatus;
+  const src = _tradesView === "paper" ? (ls.paper||{}) : (ls.live||ls);
+  const log = (src.log||[]).filter(t=>t.type==="SELL").slice(0,15);
+
+  if(!log.length) {
+    el.innerHTML = '<div style="color:var(--dim);font-size:12px;padding:16px;text-align:center">Sin operaciones aún</div>';
+    return;
+  }
+
+  const fmtDate = ts => {
+    if(!ts) return "—";
+    const d = new Date(ts);
+    return d.toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit"}) + " " + d.toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+  };
+
+  const fx = window._fxRate||1.08;
+  el.innerHTML = `<table class="data-table">
+    <thead><tr>
+      <th>Par</th><th>Entró → Salió</th>
+      <th style="text-align:right">P&L %</th>
+      <th style="text-align:right">P&L USD</th>
+      <th style="text-align:right">P&L EUR</th>
+      <th>Fecha</th>
+    </tr></thead>
+    <tbody>
+      ${log.map(t => {
+        const pnl = t.pnl||0;
+        const c2 = pnl>=0 ? "var(--green)" : "var(--red)";
+        const sym = (t.symbol||"").replace("USDC","").replace("USDT","");
+        const exitVal  = +(t.qty * t.price).toFixed(2);
+        const entryVal = pnl !== 0 ? +(exitVal / (1 + pnl/100)).toFixed(2) : exitVal;
+        const pnlAbs   = t.pnlAbs != null ? t.pnlAbs : +(exitVal - entryVal).toFixed(2);
+        const pnlEur   = +(pnlAbs / fx).toFixed(2);
+        const entryEur = +(entryVal / fx).toFixed(2);
+        const exitEur  = +(exitVal / fx).toFixed(2);
+        return `<tr>
+          <td style="font-weight:600">${sym}</td>
+          <td style="font-size:11px;color:var(--dim2)">
+            $${entryVal.toFixed(2)} → <span style="color:${c2}">$${exitVal.toFixed(2)}</span>
+            <div style="font-size:10px;color:var(--dim)">€${entryEur.toFixed(2)} → <span style="color:${c2}">€${exitEur.toFixed(2)}</span></div>
+          </td>
+          <td style="text-align:right;color:${c2};font-weight:600">${pnl>=0?"+":""}${pnl.toFixed(2)}%</td>
+          <td style="text-align:right;color:${c2};font-weight:600">${pnlAbs>=0?"+":""}$${Math.abs(pnlAbs).toFixed(2)}</td>
+          <td style="text-align:right;color:${c2}">${pnlEur>=0?"+":""}€${Math.abs(pnlEur).toFixed(2)}</td>
+          <td style="font-size:11px;color:var(--dim2)">${fmtDate(t.ts)}</td>
+        </tr>`;
+      }).join("")}
+    </tbody>
+  </table>`;
+}
+
+// // ── Live balances ──────────────────────────────────────────────────────────
+async function loadLiveBalances() {
+  const el = document.getElementById("live-balances-content");
+  if(!el) return;
+  const data = await api("GET", "/api/admin/live-balances");
+  if(!data || data.error) {
+    el.innerHTML = `<div style="color:var(--dim);font-size:12px;padding:12px">${data?.error||"No disponible"}</div>`;
+    return;
+  }
+  const balances = data.balances || [];
+  if(!balances.length) { el.innerHTML = '<div style="color:var(--dim);font-size:12px;padding:12px">Sin posiciones abiertas</div>'; return; }
+  
+  const fx = window._fxRate||1.08;
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;padding:8px 0">
+    ${balances.map(b => {
+      const isUSDC = b.asset === "USDC";
+      const pnlColor = (b.pnlPct||0) >= 0 ? "var(--green)" : "var(--red)";
+      const valEur = (b.valueUSD / fx).toFixed(2);
+      return `<div style="background:var(--bg2);border-radius:7px;padding:10px 12px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim2);margin-bottom:4px">${b.asset}</div>
+        <div style="font-size:16px;font-family:'Playfair Display',serif;font-weight:600;color:var(--gold)">$${b.valueUSD.toFixed(2)}</div>
+        <div style="font-size:11px;color:var(--dim);margin-top:1px">€${valEur}</div>
+        ${!isUSDC ? `<div style="font-size:11px;color:var(--dim2);margin-top:3px">${b.qty} ${b.asset} @ $${b.price}</div>
+        <div style="font-size:11px;color:${pnlColor};margin-top:1px">${b.pnlPct>=0?"+":""}${b.pnlPct}% vs $${b.entryPrice}</div>` : 
+        `<div style="font-size:11px;color:var(--dim2);margin-top:3px">Libre (sin invertir)</div>`}
+      </div>`;
+    }).join("")}
+  </div>
+  <div style="font-size:11px;color:var(--dim2);padding:4px 8px 8px">
+    Total en el bot: <b style="color:var(--text)">$${data.totalUSD.toFixed(2)}</b>
+    · <b style="color:var(--dim2)">€${(data.totalUSD/fx).toFixed(2)}</b>
+  </div>`;
+}
+
+// ── Deposit registration ──────────────────────────────────────────────────────
+function toggleClientSelect(val) {
+  const row = document.getElementById("mc-client-row");
+  if(!row) return;
+  row.style.display = val === "client" ? "block" : "none";
+  if(val === "client") loadClientsForDeposit();
+}
+
+async function loadClientsForDeposit() {
+  const sel = document.getElementById("mc-client-id");
+  if(!sel) return;
+  const clients = await api("GET", "/api/admin/clients");
+  if(!clients?.length) { sel.innerHTML = '<option value="">Sin clientes</option>'; return; }
+  sel.innerHTML = clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
+}
+
+async function registerDeposit() {
+  const amount = +document.getElementById("mc-amount").value;
+  const currency = document.getElementById("mc-currency").value;
+  const note = document.getElementById("mc-note").value;
+  const owner = document.getElementById("mc-owner")?.value || "manager";
+  const clientId = document.getElementById("mc-client-id")?.value;
+
+  if(!amount || amount <= 0) { showToast("Introduce un importe válido", "error"); return; }
+
+  let r;
+  if(owner === "manager") {
+    // Register as manager capital
+    r = await api("POST", "/api/admin/manager-capital", {amount, currency, note});
+  } else {
+    // Register as client deposit
+    if(!clientId) { showToast("Selecciona un cliente", "error"); return; }
+    r = await api("POST", `/api/admin/clients/${clientId}/deposit`, {amount, currency, note, type:"deposit"});
+  }
+  
+  if(r?.ok) {
+    showToast(`✅ Depósito registrado: ${amount} ${currency}`, "success");
+    document.getElementById("mc-amount").value = "";
+    document.getElementById("mc-note").value = "";
+    loadOverview();
+    loadLiveBalances();
+  } else {
+    showToast("❌ " + (r?.error || "Error al registrar"), "error");
+    // Show balance error if Binance doesn't have enough
+    if(r?.realBalance !== undefined) {
+      showToast(`Binance tiene $${r.realBalance} libre, necesitas $${r.required}`, "error");
+    }
+  }
+}
+
+// // Check existing token on load
+(async () => {
+  if (token) {
+    const r = await api("GET","/api/auth/me").catch(()=>null);
+    if (r?.role) {
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("app").style.display = "flex";
+      await init();
+    } else {
+      token = "";
+      localStorage.removeItem("bafir_token");
+      document.getElementById("login-screen").style.display = "flex";
+    }
+  } else {
+    document.getElementById("login-screen").style.display = "flex";
+    document.getElementById("app").style.display = "none";
+  }
+})();
+
+// ── toggleSidebar ──────────────────────────────────────────────────────────
+// toggleSidebar handled by original
+</script>
+<script>
+// Add agreement + terms links to admin nav
+(function() {
+  const nav = document.querySelector(".sidebar-nav");
+  if(nav) {
+    const li = document.createElement("li");
+    li.className = "nav-item";
+    li.innerHTML = '<a class="nav-link" href="/terms" target="_blank" title="Términos"><span class="nav-icon">📋</span><span class="nav-label">Términos</span></a>';
+    nav.appendChild(li);
+    const li2 = document.createElement("li");
+    li2.className = "nav-item";
+    li2.innerHTML = '<a class="nav-link" href="/shared/agreement.html" target="_blank" title="Acuerdo"><span class="nav-icon">📝</span><span class="nav-label">Acuerdo</span></a>';
+    nav.appendChild(li2);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "bafir-trading",
+  "version": "3.0.0",
+  "description": "BAFIR TRADING v3 \u2014 Distribuciones peri\u00f3dicas, doble curva, ROI inicial, participaci\u00f3n",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.17.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

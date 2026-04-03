@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BAFIR Trading — Conectar cuenta</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"DM Sans",sans-serif;background:#f8f5f0;color:#1a1714;min-height:100vh}
+header{background:#0f0e0c;padding:16px 32px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:"Playfair Display",serif;color:#b8942a;font-size:18px;font-weight:600}
+.wrap{max-width:580px;margin:0 auto;padding:48px 24px}
+.step{background:#fff;border:1px solid #e8e2d8;border-radius:14px;padding:28px 32px;margin-bottom:20px}
+.step-num{width:28px;height:28px;background:#0f0e0c;color:#b8942a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-bottom:12px}
+h2{font-family:"Playfair Display",serif;font-size:20px;margin-bottom:8px}
+p{color:#6a6460;font-size:14px;margin-bottom:16px;line-height:1.6}
+.img-hint{background:#f0ece6;border-radius:8px;padding:12px 16px;font-size:13px;color:#6a6460;margin-bottom:16px}
+.img-hint b{color:#1a1714}
+label{display:block;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#9a9490;margin-bottom:5px}
+input{width:100%;padding:11px 14px;border:1.5px solid #e8e2d8;border-radius:8px;font-family:"DM Sans",sans-serif;font-size:14px;background:#fff;color:#1a1714;margin-bottom:16px;outline:none;transition:border-color .2s}
+input:focus{border-color:#b8942a}
+.warning{background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;font-size:13px;margin-bottom:20px}
+.btn{width:100%;padding:14px;background:#0f0e0c;color:#fff;border:none;border-radius:8px;font-family:"DM Sans",sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s}
+.btn:hover{background:#2a2520}
+.btn:disabled{background:#ccc;cursor:not-allowed}
+.btn-gold{background:#b8942a}.btn-gold:hover{background:#a07d22}
+.msg{text-align:center;padding:16px;border-radius:8px;font-size:14px;margin-top:12px;display:none}
+.msg.ok{background:#d4edda;color:#155724;display:block}
+.msg.err{background:#f8d7da;color:#721c24;display:block}
+.hero{text-align:center;margin-bottom:36px}
+.hero h1{font-family:"Playfair Display",serif;font-size:32px;margin-bottom:8px}
+.hero p{color:#6a6460;font-size:15px}
+.checklist{list-style:none;margin:0 0 16px}
+.checklist li{padding:6px 0;font-size:14px;color:#3a3530;display:flex;align-items:center;gap:8px}
+.checklist li::before{content:"✅";font-size:12px}
+.tag-warning::before{content:"⚠️" !important}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">BAFIR Trading</div>
+  <a href="/terms" style="color:#666;font-size:12px;text-decoration:none">Términos de servicio</a>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>Conecta tu cuenta</h1>
+    <p>3 pasos para que el bot empiece a operar en tu Binance</p>
+  </div>
+
+  <!-- STEP 1: Login -->
+  <div class="step" id="step1">
+    <div class="step-num">1</div>
+    <h2>Accede a tu cuenta</h2>
+    <p>Introduce las credenciales que te ha dado tu gestor.</p>
+    <label>Tu email</label>
+    <input type="email" id="ob-email" placeholder="tu@email.com">
+    <label>Contraseña</label>
+    <input type="password" id="ob-password" placeholder="••••••••">
+    <button class="btn" onclick="obLogin()">Acceder</button>
+    <div id="msg1" class="msg"></div>
+  </div>
+
+  <!-- STEP 2: Binance API -->
+  <div class="step" id="step2" style="opacity:.4;pointer-events:none">
+    <div class="step-num">2</div>
+    <h2>Crea una API key en Binance</h2>
+    <p>Ve a <b>Binance → Perfil → API Management → Crear API</b>. Pon un nombre como "BAFIR".</p>
+    <div class="img-hint">
+      <b>⚠️ Permisos obligatorios:</b><br>
+      ✅ Enable Reading<br>
+      ✅ Enable Spot &amp; Margin Trading<br>
+      ❌ <b>NO actives</b> Enable Withdrawals (por tu seguridad)
+    </div>
+    <div class="warning">Tu dinero permanece en tu Binance en todo momento. El bot solo puede comprar y vender — nunca retirar.</div>
+    <label>API Key</label>
+    <input type="text" id="ob-apikey" placeholder="Pega aquí tu API Key">
+    <label>API Secret</label>
+    <input type="password" id="ob-apisecret" placeholder="Pega aquí tu API Secret">
+    <button class="btn btn-gold" onclick="obSaveKeys()">Guardar y verificar</button>
+    <div id="msg2" class="msg"></div>
+  </div>
+
+  <!-- STEP 3: Done -->
+  <div class="step" id="step3" style="opacity:.4;pointer-events:none">
+    <div class="step-num">3</div>
+    <h2>¡Todo listo!</h2>
+    <p>El bot está operando en tu cuenta. Puedes ver tu portfolio en el dashboard.</p>
+    <ul class="checklist">
+      <li>API conectada y verificada</li>
+      <li>Bot operando con tu capital</li>
+      <li>Dashboard actualizado en tiempo real</li>
+      <li class="tag-warning">Recuerda que puedes revocar el acceso en Binance cuando quieras</li>
+    </ul>
+    <button class="btn" onclick="window.location.href='/client'">Ver mi dashboard →</button>
+  </div>
+</div>
+
+<script>
+const API = "";
+let _token = localStorage.getItem("bafir_token") || "";
+
+async function api(method, url, body) {
+  const r = await fetch(API+url, {
+    method, headers: {"Content-Type":"application/json","Authorization":"Bearer "+_token},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if(r.status === 401) { localStorage.clear(); window.location.href="/"; return null; }
+  return r.json();
+}
+
+function showMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = "msg " + (ok?"ok":"err");
+}
+
+async function obLogin() {
+  const email = document.getElementById("ob-email").value.trim();
+  const pw    = document.getElementById("ob-password").value;
+  if(!email || !pw) return showMsg("msg1","Introduce email y contraseña",false);
+
+  const r = await fetch(API+"/api/auth/client-login", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({email, password:pw}),
+  });
+  const data = await r.json();
+  if(!data.token) return showMsg("msg1", data.error||"Credenciales incorrectas", false);
+
+  _token = data.token;
+  localStorage.setItem("bafir_token", data.token);
+  localStorage.setItem("bafir_role", "client");
+  showMsg("msg1","✅ Acceso correcto", true);
+
+  // Unlock step 2
+  setTimeout(()=>{
+    document.getElementById("step2").style.opacity="1";
+    document.getElementById("step2").style.pointerEvents="auto";
+    document.getElementById("step2").scrollIntoView({behavior:"smooth"});
+  }, 800);
+}
+
+async function obSaveKeys() {
+  const apiKey    = document.getElementById("ob-apikey").value.trim();
+  const apiSecret = document.getElementById("ob-apisecret").value.trim();
+  if(!apiKey || !apiSecret) return showMsg("msg2","Introduce ambas claves",false);
+  if(apiKey.length < 20)   return showMsg("msg2","La API Key parece incorrecta",false);
+
+  document.querySelector("#step2 .btn").disabled = true;
+  document.querySelector("#step2 .btn").textContent = "Verificando...";
+
+  const r = await api("POST","/api/client/connect-binance",{apiKey,apiSecret});
+  if(!r) { document.querySelector("#step2 .btn").disabled=false; return; }
+
+  if(r.ok) {
+    showMsg("msg2","✅ API verificada — "+r.balance+" USDC disponibles", true);
+    setTimeout(()=>{
+      document.getElementById("step3").style.opacity="1";
+      document.getElementById("step3").style.pointerEvents="auto";
+      document.getElementById("step3").scrollIntoView({behavior:"smooth"});
+    }, 1000);
+  } else {
+    document.querySelector("#step2 .btn").disabled=false;
+    document.querySelector("#step2 .btn").textContent="Guardar y verificar";
+    showMsg("msg2", r.error||"Error verificando las claves. Comprueba que son correctas y que el permiso de Spot trading está activado.", false);
+  }
+}
+</script>
+</body>
+</html>

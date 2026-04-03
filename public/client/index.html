@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BAFIR Trading — Mi Cartera</title>
+<link rel="icon" href="/bafir_favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f8f5f0;--card:#fff;--text:#1a1714;--dim:#9a9490;--dim2:#6a6460;
+  --gold:#b8942a;--gold2:#d4a83a;--dark:#0f0e0c;
+  --border:#e8e2d8;--green:#1a7a50;--red:#c0392b;--purple:#7c3aed;
+}
+html,body{background:var(--bg);color:var(--text);font-family:"DM Sans",sans-serif;font-size:14px;min-height:100vh}
+
+/* ── HEADER ── */
+header{background:var(--dark);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50}
+.logo{display:flex;align-items:center;gap:10px}
+.logo img{height:26px}
+.header-right{display:flex;align-items:center;gap:12px}
+.cur-toggle{display:flex;background:#1a1a1a;border-radius:20px;padding:2px;border:1px solid #333}
+.ct-btn{padding:4px 14px;border-radius:18px;border:none;font-size:11px;cursor:pointer;font-family:"DM Sans",sans-serif;font-weight:500;transition:all .2s;background:transparent;color:#666}
+.ct-btn.active{background:var(--gold);color:var(--dark)}
+.client-name{font-size:12px;color:#888}
+.btn-logout{background:none;border:1px solid #333;color:#777;border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer}
+
+/* ── LAYOUT ── */
+.wrap{max-width:1100px;margin:0 auto;padding:28px 20px}
+
+/* ── HERO ── */
+.hero{background:var(--dark);border-radius:16px;padding:28px 32px;margin-bottom:20px;position:relative;overflow:hidden;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}
+.hero::before{content:"";position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:var(--gold);opacity:.06}
+.hero-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#555;margin-bottom:8px}
+.hero-value{font-family:"Playfair Display",serif;font-size:48px;font-weight:700;color:#fff;line-height:1}
+.hero-sub{font-size:13px;color:#555;margin-top:6px}
+.hero-pnl{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;margin-top:10px}
+.pnl-pos{background:#1a7a5020;color:#2ecc80;border:1px solid #1a7a5030}
+.pnl-neg{background:#c0392b18;color:#e74c3c;border:1px solid #c0392b30}
+.hero-stats{display:flex;flex-direction:column;gap:10px;min-width:180px}
+.hstat{background:#ffffff08;border:1px solid #ffffff12;border-radius:10px;padding:12px 16px;text-align:right}
+.hstat-l{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#555;margin-bottom:4px}
+.hstat-v{font-family:"Playfair Display",serif;font-size:20px;font-weight:600;color:#fff}
+.hstat-s{font-size:10px;color:#666;margin-top:2px}
+
+/* ── GRID ── */
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.card-body{padding:18px}
+
+/* ── STAT CARDS ── */
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+.stat-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:8px}
+.stat-value{font-family:"Playfair Display",serif;font-size:24px;font-weight:600}
+.stat-sub{font-size:11px;color:var(--dim2);margin-top:4px}
+.stat-delta{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;margin-top:6px}
+.delta-up{background:#1a7a5015;color:var(--green)}
+.delta-down{background:#c0392b15;color:var(--red)}
+
+/* ── BOT STATUS ── */
+.bot-status{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:16px 18px}
+.bst{background:var(--bg);border-radius:8px;padding:10px 12px}
+.bst-l{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);margin-bottom:4px}
+.bst-v{font-size:16px;font-family:"Playfair Display",serif;font-weight:600}
+.regime-bull{color:var(--green)}
+.regime-bear{color:var(--red)}
+.regime-lat{color:var(--gold)}
+
+/* ── TRADES TABLE ── */
+.trades-table{width:100%;border-collapse:collapse}
+.trades-table th{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.trades-table td{padding:10px 12px;border-bottom:1px solid #f0ece6;font-size:12px}
+.trades-table tr:last-child td{border:none}
+.trades-table tr:hover td{background:#faf8f5}
+.tag{display:inline-flex;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600}
+.tag-win{background:#1a7a5015;color:var(--green)}
+.tag-loss{background:#c0392b15;color:var(--red)}
+
+/* ── PERIOD SELECTOR ── */
+.period-btns{display:flex;gap:4px;flex-wrap:wrap}
+.pb{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--dim2);transition:all .2s;font-family:"DM Sans",sans-serif}
+.pb.active,.pb:hover{background:var(--dark);color:#fff;border-color:var(--dark)}
+
+/* ── EQUITY CANVAS ── */
+canvas{width:100%;display:block}
+
+/* ── HISTORY TABLE ── */
+.hist-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0ece6}
+.hist-row:last-child{border:none}
+.hist-type{font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px}
+.hist-dep{background:#1a7a5015;color:var(--green)}
+.hist-wit{background:#c0392b15;color:var(--red)}
+.hist-dist{background:#7c3aed15;color:var(--purple)}
+
+/* ── NEXT DIST ── */
+.next-dist{background:linear-gradient(135deg,var(--dark) 0%,#2a1f0a 100%);border-radius:12px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.nd-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#666;margin-bottom:4px}
+.nd-value{font-family:"Playfair Display",serif;font-size:28px;color:#fff;font-weight:600}
+.nd-date{font-size:12px;color:#888;margin-top:4px}
+.nd-badge{background:rgba(184,148,42,0.15);border:1px solid rgba(184,148,42,0.3);color:var(--gold);padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:32px;color:var(--dim);font-size:13px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#e0d8cc;border-radius:3px}
+@media(max-width:768px){.grid-3{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr}.hero-stats{flex-direction:row}.bot-status{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><svg viewBox="0 0 120 32" style="height:28px;display:block" xmlns="http://www.w3.org/2000/svg">
+      <text x="0" y="24" font-family="Georgia,serif" font-size="26" font-weight="700" fill="#b8942a" letter-spacing="2">BAFIR</text>
+    </svg></div>
+  <div class="header-right">
+    <div class="cur-toggle">
+      <button class="ct-btn" id="b-eur" onclick="setCur('EUR')">EUR</button>
+      <button class="ct-btn active" id="b-usd" onclick="setCur('USD')">USD</button>
+    </div>
+    <span class="client-name" id="client-name">—</span>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- HERO: Capital principal -->
+  <div class="hero">
+    <div>
+      <div class="hero-label">Mi cartera</div>
+      <div class="hero-value" id="hero-value">—</div>
+      <div class="hero-sub" id="hero-sub">—</div>
+      <div class="hero-pnl" id="hero-pnl">—</div>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat">
+        <div class="hstat-l">ROI inicial</div>
+        <div class="hstat-v" id="hs-roi">—</div>
+        <div class="hstat-s">desde primer depósito</div>
+      </div>
+      <div class="hstat">
+        <div class="hstat-l">Participación</div>
+        <div class="hstat-v" id="hs-share">—</div>
+        <div class="hstat-s">del fondo total</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="grid-3">
+    <div class="stat-card">
+      <div class="stat-label">Total depositado</div>
+      <div class="stat-value" id="sc-dep">—</div>
+      <div class="stat-sub" id="sc-dep-alt">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Ganancias netas</div>
+      <div class="stat-value" id="sc-pnl">—</div>
+      <div class="stat-delta" id="sc-pnl-delta">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Próxima distribución</div>
+      <div class="stat-value" id="sc-dist">—</div>
+      <div class="stat-sub" id="sc-dist-date">—</div>
+    </div>
+  </div>
+
+  <!-- BOT STATUS -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header">
+      <span class="card-title">Estado del bot ahora mismo</span>
+      <span id="bot-updated" style="font-size:10px;color:var(--dim)">—</span>
+    </div>
+    <div class="bot-status">
+      <div class="bst"><div class="bst-l">Régimen</div><div class="bst-v" id="bot-regime">—</div></div>
+      <div class="bst"><div class="bst-l">Fear & Greed</div><div class="bst-v" id="bot-fg">—</div></div>
+      <div class="bst"><div class="bst-l">Win Rate</div><div class="bst-v" id="bot-wr">—</div></div>
+      <div class="bst"><div class="bst-l">Posiciones</div><div class="bst-v" id="bot-pos">—</div></div>
+    </div>
+  </div>
+
+  <!-- RENDIMIENTO POR PERIODO + EQUITY CHART -->
+  <div class="card" style="margin-bottom:20px" id="card-binance-status">
+    <div class="card-header">
+      <span class="card-title">🔗 Conexión Binance</span>
+      <a href="/onboarding" style="font-size:11px;color:var(--gold);text-decoration:none" id="link-connect-binance">Configurar →</a>
+    </div>
+    <div id="binance-connection-status" style="display:flex;flex-direction:column;gap:8px;padding:4px 0">
+      <div style="text-align:center;padding:16px;color:var(--dim);font-size:12px">Cargando estado...</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header">
+      <span class="card-title">Rendimiento</span>
+      <div class="period-btns" id="period-btns"></div>
+    </div>
+    <div class="card-body" style="padding-bottom:8px">
+      <div id="period-detail"></div>
+    </div>
+    <div style="padding:0 18px 18px">
+      <canvas id="eq-canvas" style="height:160px"></canvas>
+    </div>
+  </div>
+
+  <!-- ÚLTIMAS OPERACIONES DEL BOT -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header">
+      <span class="card-title">Últimas operaciones del bot</span>
+      <span style="font-size:10px;color:var(--dim)">Operaciones reales en tu nombre</span>
+    </div>
+    <div id="trades-content">
+      <div class="empty">Cargando operaciones...</div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Depósitos y retiradas</span></div>
+      <div class="card-body" id="history-content">
+        <div class="empty">Sin movimientos</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Distribuciones recibidas</span></div>
+      <div class="card-body" id="distributions-content">
+        <div class="empty">Sin distribuciones</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const token=localStorage.getItem("bafir_token")||"", clientId=localStorage.getItem("bafir_clientId")||"";
+if(!token||!clientId) window.location.href="/";
+
+let displayCur=null, clientData=null;
+
+async function load(){
+  const r=await fetch("/api/client/metrics",{headers:{"Authorization":"Bearer "+token}});
+  if(r.status===401){localStorage.clear();window.location.href="/";return;}
+  clientData=await r.json();
+  if(!displayCur) displayCur=clientData.client.currency||"USD";
+  document.getElementById("b-eur").classList.toggle("active",displayCur==="EUR");
+  document.getElementById("b-usd").classList.toggle("active",displayCur==="USD");
+  render();
+}
+function setCur(c){displayCur=c;document.getElementById("b-eur").classList.toggle("active",c==="EUR");document.getElementById("b-usd").classList.toggle("active",c==="USD");if(clientData)render();}
+
+function render(){
+  const d=clientData, cur=displayCur, fx=d.fxRate||1.08;
+  const clientCur=d.client.currency||"USD";
+  function cvt(v,fc){if(fc===cur)return v;if(fc==="EUR"&&cur==="USD")return v*fx;return v/fx;}
+  const fC=n=>cur==="EUR"?"€"+new Intl.NumberFormat("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n):"$"+new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+  const fP=n=>(n>=0?"+":"")+n.toFixed(2)+"%";
+  const clrC=n=>n>=0?"var(--green)":"var(--red)";
+  const clrCls=n=>n>=0?"green":"red";
+  const fD=ts=>new Date(ts).toLocaleDateString("es-ES",{day:"2-digit",month:"short",year:"numeric"});
+
+  const curVal=cvt(d.twr.currentValue,clientCur);
+  const depVal=cvt(d.twr.totalDeposited,clientCur);
+  const pnlVal=cvt(d.twr.pnlAbs,clientCur);
+  const firstDep=cvt(d.twr.firstDeposit||0,clientCur);
+  const distPaid=cvt(d.twr.totalDistPaid||0,clientCur);
+  const altCur=cur==="EUR"?"USD":"EUR";
+
+  document.getElementById("cname").textContent=d.client.name;
+
+  // Hero
+  document.getElementById("h-val").textContent=fC(curVal);
+  document.getElementById("h-alt").textContent=`${altCur==="EUR"?"€":"$"}${(cur==="EUR"?curVal*fx:curVal/fx).toFixed(2)} ${altCur}`;
+  const pe=document.getElementById("h-pnl");
+  pe.textContent=`${pnlVal>=0?"▲":"▼"} ${fC(Math.abs(pnlVal))} (${fP(d.twr.pnlPct)})`;
+  pe.className=`hp ${pnlVal>=0?"pos":"neg"}`;
+
+  // Stats
+  document.getElementById("s-dep").textContent=fC(depVal);
+  document.getElementById("s-ndep").textContent=`${d.deposits.length} aportación(es)`;
+  const pe2=document.getElementById("s-pnl");
+  pe2.textContent=fC(pnlVal);pe2.className="sv "+clrCls(pnlVal);
+  document.getElementById("s-pnlpct").textContent=fP(d.twr.pnlPct);
+  const roi=document.getElementById("s-roi");
+  roi.textContent=fP(d.twr.roiInitial||0);roi.style.color=clrC(d.twr.roiInitial||0);
+  document.getElementById("s-roi-sub").textContent=`vs ${fC(firstDep)} inicial`;
+  document.getElementById("s-dist").textContent=fC(distPaid);
+
+  // Participación
+  const share=d.client.share||0;
+  const circ=2*Math.PI*30;
+  document.getElementById("p-ring").setAttribute("stroke-dasharray",`${(share/100)*circ} ${circ}`);
+  document.getElementById("p-pct").textContent=`${share}%`;
+  document.getElementById("p-share").textContent=`${share}% del fondo`;
+  document.getElementById("p-first").textContent=fC(firstDep);
+  document.getElementById("p-total").textContent=fC(depVal);
+  document.getElementById("p-val").textContent=fC(curVal);
+
+  // Distribuciones
+  const ds=d.distSchedule;
+  const distNextEl=document.getElementById("dist-next-section");
+  if(ds&&ds.next&&d.client.distribution?.enabled){
+    const nextAmt=cvt(ds.next.amtUSD,"USD");
+    distNextEl.innerHTML=`
+      <div style="font-size:22px;font-weight:700;color:var(--purple);font-family:'Playfair Display',serif">${fC(nextAmt)}</div>
+      <div style="font-size:11px;color:var(--purple);margin-top:4px;opacity:.7">${fD(ds.next.date)}</div>
+      <div style="font-size:10px;color:var(--dim2);margin-top:3px">${ds.config.pct}% ${{initial:"de tu aportación inicial",current:"del valor actual"}[ds.config.baseType]} · ${{monthly:"Mensual",quarterly:"Trimestral",annual:"Anual"}[ds.config.periodicity]||""}</div>`;
+  } else {
+    distNextEl.innerHTML=`<div style="font-size:12px;color:var(--dim)">Sin distribución configurada</div>`;
+  }
+
+  const tl=document.getElementById("dist-timeline");
+  const past=(ds?.past||[]).slice().reverse();
+  tl.innerHTML=past.map(p=>{
+    const amt=cvt(p.amtUSD,"USD");
+    return `<div class="di ${p.paid?"paid":"pending"}">
+      <div><div style="font-size:11px;font-weight:600">${fC(amt)}</div><div style="font-size:9px;color:var(--dim2)">${fD(p.date)}</div></div>
+      <span class="badge ${p.paid?"b-paid":"b-pending"}">${p.paid?"RECIBIDA":"PENDIENTE"}</span>
+    </div>`;
+  }).join("")||`<div style="font-size:11px;color:var(--dim)">Sin distribuciones aún</div>`;
+
+  // Períodos
+  const periods=d.periods.map(p=>({...p,pnl:cvt(p.pnl,clientCur),end:cvt(p.end,clientCur),start:cvt(p.start,clientCur),currency:cur}));
+  renderPeriods(periods,fC,fP,clrC);
+
+  // Doble curva
+  if(d.curves){
+    function rc(data,fid,lid){
+      if(!data?.length)return;
+      const W=600,H=100,vals=data.map(e=>e.value);
+      const min=Math.min(...vals),max=Math.max(...vals),range=max-min||1;
+      const pts=vals.map((v,i)=>`${(i/(data.length-1))*W},${H-((v-min)/range)*H}`).join(" ");
+      document.getElementById(fid)?.setAttribute("points",pts+` ${W},${H} 0,${H}`);
+      document.getElementById(lid)?.setAttribute("points",pts);
+    }
+    // Convertir a moneda de display
+    const factor=clientCur===cur?1:(cur==="USD"?fx:1/fx);
+    const c1=d.curves.withoutDist.map(e=>({...e,value:e.value*factor}));
+    const c2=d.curves.withDist.map(e=>({...e,value:e.value*factor}));
+    rc(c1,"cd-f1","cd-l1");rc(c2,"cd-f2","cd-l2");
+  }
+
+  // Monthly
+  const monthly=d.monthly.map(m=>({...m,pnl:cvt(m.pnl,clientCur),start:cvt(m.start,clientCur),end:cvt(m.end,clientCur)}));
+  const mgEl=document.getElementById("mg");
+  mgEl.innerHTML=monthly.slice(-12).map(m=>{
+    const bg=m.pnlPct>=0?`rgba(26,122,80,${Math.min(.18,Math.abs(m.pnlPct)/20)})`:`rgba(192,57,43,${Math.min(.18,Math.abs(m.pnlPct)/20)})`;
+    return `<div class="mc" style="background:${bg};border:1px solid ${m.pnlPct>=0?"#1a7a5022":"#c0392b22"}"><div class="ml">${m.label}</div><div class="mp ${clrCls(m.pnlPct)}">${fP(m.pnlPct)}</div><div class="me">${fC(m.pnl)}</div></div>`;
+  }).join("")||`<div style="grid-column:1/-1;text-align:center;color:var(--dim);padding:14px;font-size:12px">Sin datos</div>`;
+
+  // Depósitos
+  document.getElementById("dep-t").innerHTML=d.deposits.slice().reverse().map(dep=>
+    `<tr><td>${fD(dep.ts)}</td><td style="font-weight:600;color:var(--gold)">${fC(cvt(dep.amount,dep.currency))}</td><td style="color:var(--dim2)">${dep.currency}</td><td style="color:var(--dim2)">${dep.note||"—"}</td></tr>`
+  ).join("")||`<tr><td colspan="4" style="text-align:center;color:var(--dim);padding:14px">Sin aportaciones</td></tr>`;
+
+  // Summary
+  const withdrawn=cvt(d.twr.totalWithdrawn||0,clientCur);
+  document.getElementById("sum").innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:0">
+      ${[
+        ["Aportación inicial",fC(firstDep)],
+        ["Aportaciones adicionales",fC(depVal-firstDep)],
+        ["Total depositado",fC(depVal)],
+        ["Retiradas",fC(withdrawn)],
+        ["Distribuciones recibidas","<span style='color:var(--purple)'>"+fC(distPaid)+"</span>"],
+        ["Valor actual","<span style='color:var(--gold)'>"+fC(curVal)+"</span>"],
+        ["Ganancia / Pérdida","<span style='color:"+clrC(pnlVal)+"'>"+fC(pnlVal)+" ("+fP(d.twr.pnlPct)+")</span>"],
+        ["ROI s/ inicial","<span style='color:"+clrC(d.twr.roiInitial||0)+"'>"+fP(d.twr.roiInitial||0)+"</span>"],
+      ].map(([l,v])=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px"><span style="color:var(--dim2)">${l}</span><span>${v}</span></div>`).join("")}
+    </div>`;
+}
+
+function renderPeriods(periods,fC,fP,clrC){
+  const row=document.getElementById("pbr");
+  row.innerHTML=periods.map(p=>`<button class="pb ${p.period==="1M"?"active":""}" onclick="selP(${JSON.stringify(periods).replace(/"/g,'&quot;')},'${p.period}',this)">${p.period}</button>`).join("");
+  const def=periods.find(p=>p.period==="1M")||periods[0];
+  if(def) renderPD(def);
+}
+function selP(periods,period,btn){
+  document.querySelectorAll(".pb").forEach(b=>b.classList.remove("active")); btn.classList.add("active");
+  const p=periods.find(x=>x.period===period); if(p) renderPD(p);
+}
+function renderPD(p){
+  document.getElementById("pd").innerHTML=`
+    <div class="pdc"><div class="pdl">P&L</div><div class="pdv ${p.pnl>=0?"green":"red"}">${(p.currency==="EUR"?"€":"$")+(Math.abs(p.pnl||0).toFixed(2))}</div></div>
+    <div class="pdc"><div class="pdl">P&L %</div><div class="pdv ${(p.pnlPct||0)>=0?"green":"red"}">${(p.pnlPct||0)>=0?"+":""}${(p.pnlPct||0).toFixed(2)}%</div></div>
+    <div class="pdc"><div class="pdl">Valor final</div><div class="pdv gold">${(p.currency==="EUR"?"€":"$")+(p.end||0).toFixed(2)}</div></div>`;
+}
+
+async function logout(){await fetch("/api/auth/logout",{method:"POST",headers:{"Authorization":"Bearer "+token}});localStorage.clear();window.location.href="/";}
+load();
+
+
+// ── Enhanced render with bot status and trades ────────────────────────────────
+const _origRender = render;
+function render() {
+  _origRender();
+  const d = clientData;
+  if(!d) return;
+
+  // Hero
+  const cur = displayCur, fx = d.fxRate||1.08;
+  const fC = n => cur==="EUR" ? "€"+n.toFixed(2) : "$"+n.toFixed(2);
+  const cv = (v, fc) => fc===cur?v : fc==="EUR"&&cur==="USD"?v*fx:v/fx;
+  const val = cv(d.twr.currentValue, d.twr.currency);
+  const dep = cv(d.twr.totalDeposited, d.twr.currency);
+  const pnl = val - dep;
+  const pnlPct = dep>0?(pnl/dep*100):0;
+
+  document.getElementById("hero-value").textContent = fC(val);
+  document.getElementById("client-name").textContent = d.client?.name||"";
+  document.getElementById("hero-sub").textContent = `${fC(dep)} depositado`;
+  const heroEl = document.getElementById("hero-pnl");
+  heroEl.textContent = `${pnl>=0?"+":""}${fC(pnl)} (${pnlPct>=0?"+":""}${pnlPct.toFixed(2)}%)`;
+  heroEl.className = "hero-pnl " + (pnl>=0?"pnl-pos":"pnl-neg");
+
+  document.getElementById("hs-roi").textContent = (d.twr.roiInitial>=0?"+":"")+(d.twr.roiInitial||0).toFixed(2)+"%";
+  document.getElementById("hs-share").textContent = (d.twr.participation||0)+"%";
+
+  document.getElementById("sc-dep").textContent = fC(dep);
+  document.getElementById("sc-dep-alt").textContent = cur==="EUR"?"$"+(dep*fx).toFixed(2)+" USD":"€"+(dep/fx).toFixed(2)+" EUR";
+  document.getElementById("sc-pnl").textContent = (pnl>=0?"+":"")+fC(pnl);
+  const deltaEl = document.getElementById("sc-pnl-delta");
+  deltaEl.textContent = (pnlPct>=0?"+":"")+pnlPct.toFixed(2)+"%";
+  deltaEl.className = "stat-delta "+(pnl>=0?"delta-up":"delta-down");
+
+  // Next distribution
+  const nextDist = d.distSchedule?.next;
+  if(nextDist) {
+    const distAmt = cv(nextDist.amtDisplay||0, nextDist.currency||"EUR");
+    document.getElementById("sc-dist").textContent = fC(distAmt);
+    document.getElementById("sc-dist-date").textContent = nextDist.date ? new Date(nextDist.date).toLocaleDateString("es-ES",{day:"numeric",month:"long"}) : "—";
+  } else {
+    document.getElementById("sc-dist").textContent = "—";
+    document.getElementById("sc-dist-date").textContent = "sin distribución programada";
+  }
+
+  // Bot status
+  const bot = d.botLive;
+  if(bot) {
+    const regimeColor = bot.marketRegime==="BULL"?"regime-bull":bot.marketRegime==="BEAR"?"regime-bear":"regime-lat";
+    const regimeEl = document.getElementById("bot-regime");
+    regimeEl.textContent = bot.marketRegime||"—";
+    regimeEl.className = "bst-v "+regimeColor;
+    document.getElementById("bot-fg").textContent = bot.fearGreed||"—";
+    const wrEl = document.getElementById("bot-wr");
+    wrEl.textContent = (bot.winRate||0)+"%";
+    wrEl.style.color = (bot.winRate||0)>=50?"var(--green)":"var(--red)";
+    document.getElementById("bot-pos").textContent = (bot.openPositions||0)+" abiertas";
+    document.getElementById("bot-updated").textContent = "Actualizado ahora";
+  }
+
+  // Trades
+  const tradesEl = document.getElementById("trades-content");
+  const trades = bot?.recentTrades||[];
+  if(!trades.length) {
+    tradesEl.innerHTML = '<div class="empty">Sin operaciones recientes</div>';
+  } else {
+    tradesEl.innerHTML = '<table class="trades-table"><thead><tr><th>Par</th><th>Resultado</th><th>Entró</th><th>Salió</th><th>P&L '+cur+'</th><th>Fecha</th></tr></thead><tbody>' +
+      trades.map(t => {
+        const win = (t.pnl||0)>=0;
+        const exitVal = +(t.qty*(t.price||0)).toFixed(2)||0;
+        const entryVal = t.pnl!==0 ? +(exitVal/(1+(t.pnl||0)/100)).toFixed(2) : exitVal;
+        const pnlA = t.pnlAbs!=null?t.pnlAbs:+(exitVal-entryVal).toFixed(2);
+        const pnlCur = cv(pnlA, "USD");
+        const dt = t.ts?new Date(t.ts).toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+        return `<tr>
+          <td style="font-weight:600">${t.symbol||"—"}</td>
+          <td><span class="tag ${win?"tag-win":"tag-loss"}">${win?"GANANCIA":"PÉRDIDA"}</span></td>
+          <td style="font-size:11px;color:var(--dim2)">$${entryVal.toFixed(2)}</td>
+          <td style="font-size:11px;color:var(--dim2)">$${exitVal.toFixed(2)}</td>
+          <td style="font-weight:600;color:${win?"var(--green)":"var(--red)"}">${pnlCur>=0?"+":""}${fC(Math.abs(pnlCur))}</td>
+          <td style="font-size:11px;color:var(--dim2)">${dt}</td>
+        </tr>`;
+      }).join("") + '</tbody></table>';
+  }
+
+  // History
+  const histEl = document.getElementById("history-content");
+  const deps = d.deposits||[], withs = d.withdrawals||[];
+  const all = [...deps.map(x=>({...x,tipo:"dep"})),...withs.map(x=>({...x,tipo:"wit"}))].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!all.length) {
+    histEl.innerHTML = '<div class="empty">Sin movimientos</div>';
+  } else {
+    histEl.innerHTML = all.map(m=>{
+      const amt = cv(m.amount,m.currency||"USD");
+      const dt = m.date?new Date(m.date).toLocaleDateString("es-ES",{day:"numeric",month:"short",year:"numeric"}):"";
+      return `<div class="hist-row">
+        <div><span class="hist-type ${m.tipo==="dep"?"hist-dep":"hist-wit"}">${m.tipo==="dep"?"Depósito":"Retirada"}</span>
+        <div style="font-size:11px;color:var(--dim2);margin-top:3px">${dt}</div></div>
+        <div style="font-weight:600;color:${m.tipo==="dep"?"var(--green)":"var(--red)"}">${m.tipo==="dep"?"+":"−"}${fC(amt)}</div>
+      </div>`;
+    }).join("");
+  }
+
+  // Distributions received
+  const distEl = document.getElementById("distributions-content");
+  const paidDists = (d.distSchedule?.past||[]).filter(x=>x.paid).slice(0,8);
+  if(!paidDists.length) {
+    distEl.innerHTML = '<div class="empty">Sin distribuciones aún</div>';
+  } else {
+    distEl.innerHTML = paidDists.map(dist=>{
+      const amt = cv(dist.amtDisplay||0, dist.currency||"EUR");
+      const dt = dist.date?new Date(dist.date).toLocaleDateString("es-ES",{day:"numeric",month:"short",year:"numeric"}):"";
+      return `<div class="hist-row">
+        <div><span class="hist-type hist-dist">Distribución</span>
+        <div style="font-size:11px;color:var(--dim2);margin-top:3px">${dt}</div></div>
+        <div style="font-weight:600;color:var(--purple)">${fC(amt)}</div>
+      </div>`;
+    }).join("");
+  }
+
+  renderBinanceStatus(d);
+}
+function renderBinanceStatus(data) {
+  const el = document.getElementById("binance-connection-status");
+  const linkEl = document.getElementById("link-connect-binance");
+  if(!el) return;
+
+  if(data.binanceConnected) {
+    if(linkEl) linkEl.textContent = "Reconfigurar →";
+    const trades = data.copyTrades || [];
+    const recentTrades = trades.slice(0,5);
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(26,122,80,.12);border:1px solid rgba(26,122,80,.3);border-radius:8px">
+        <span style="font-size:18px">✅</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--green)">Cuenta Binance conectada</div>
+          <div style="font-size:11px;color:var(--dim2)">El bot opera automáticamente en tu cuenta</div>
+        </div>
+      </div>
+      ${recentTrades.length ? `
+      <div style="margin-top:8px">
+        <div style="font-size:11px;color:var(--dim2);margin-bottom:6px">Últimas operaciones copiadas:</div>
+        ${recentTrades.map(t=>`
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px">
+            <span>${t.type||'TRADE'} <strong>${t.symbol||'—'}</strong></span>
+            <span style="color:var(--dim2)">${t.ts?new Date(t.ts).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—'}</span>
+          </div>`).join('')}
+      </div>` : `<div style="font-size:11px;color:var(--dim2)">Sin operaciones copiadas aún — el bot actuará en la próxima señal</div>`}
+    `;
+  } else {
+    if(linkEl) linkEl.textContent = "Conectar ahora →";
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.3);border-radius:8px">
+        <span style="font-size:18px">⚠️</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--gold)">Sin cuenta Binance conectada</div>
+          <div style="font-size:11px;color:var(--dim2)">Conecta tu API key para que el bot opere en tu cuenta</div>
+        </div>
+      </div>
+      <a href="/onboarding" style="display:block;margin-top:10px;text-align:center;background:var(--gold);color:#fff;padding:10px;border-radius:8px;font-weight:600;font-size:13px;text-decoration:none">
+        🔗 Conectar cuenta Binance →
+      </a>
+    `;
+  }
+}
+
+
+</script>
+</body>
+</html>
