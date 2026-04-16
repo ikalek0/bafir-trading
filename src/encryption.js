@@ -1,36 +1,54 @@
 // ─── ENCRYPTION MODULE ────────────────────────────────────────────────────────
 // Cifra las API keys de Binance en la base de datos
 // Usa AES-256-GCM — simétrico, autenticado, seguro
+//
+// BATCH-2 FIX #1 (CRITICAL #B3): ENCRYPTION_KEY es OBLIGATORIA.
+// Antes: fallback a `bafir_default_${hostname}` si no definida. Hostname es
+// predecible (ej: "bafir-server") → atacante con backup de DB + hostname
+// descifra todas las API keys de clientes.
+// Ahora: throw si ENCRYPTION_KEY no definida o < 32 chars. Boot falla rápido.
 "use strict";
 
 const crypto = require("crypto");
 
-// La clave de cifrado viene de variable de entorno
-// Si no está definida, usa una clave derivada del hostname (menos seguro pero funcional)
+const PREDICTABLE_PATTERNS = [
+  /^bafir_default_/i,
+  /^changeme$/i,
+  /^default$/i,
+  /^secret$/i,
+  /^encryption_key$/i,
+];
+
 function getEncryptionKey() {
-  const raw = process.env.ENCRYPTION_KEY || `bafir_default_${require("os").hostname()}`;
-  // Derivar clave de 32 bytes con SHA-256
+  const raw = process.env.ENCRYPTION_KEY;
+  if (!raw) {
+    throw new Error(
+      "ENCRYPTION_KEY required. Generate with: openssl rand -hex 32"
+    );
+  }
+  if (raw.length < 32) {
+    throw new Error(
+      `ENCRYPTION_KEY too short (${raw.length} chars, min 32). Generate with: openssl rand -hex 32`
+    );
+  }
+  for (const p of PREDICTABLE_PATTERNS) {
+    if (p.test(raw)) {
+      throw new Error("ENCRYPTION_KEY uses a predictable pattern — generate a random one");
+    }
+  }
   return crypto.createHash("sha256").update(raw).digest();
 }
 
-// Cifrar un string
 function encrypt(text) {
   if (!text) return "";
-  try {
-    const key   = getEncryptionKey();
-    const iv    = crypto.randomBytes(16);
-    const cipher= crypto.createCipheriv("aes-256-gcm", key, iv);
-    const encrypted = Buffer.concat([cipher.update(text, "utf8"), cipher.final()]);
-    const tag   = cipher.getAuthTag();
-    // Formato: iv(16) + tag(16) + encrypted — todo en base64
-    return Buffer.concat([iv, tag, encrypted]).toString("base64");
-  } catch(e) {
-    console.error("[ENCRYPT] Error cifrando:", e.message);
-    return "";
-  }
+  const key   = getEncryptionKey();
+  const iv    = crypto.randomBytes(16);
+  const cipher= crypto.createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(text, "utf8"), cipher.final()]);
+  const tag   = cipher.getAuthTag();
+  return Buffer.concat([iv, tag, encrypted]).toString("base64");
 }
 
-// Descifrar un string
 function decrypt(ciphertext) {
   if (!ciphertext) return "";
   try {
@@ -43,15 +61,14 @@ function decrypt(ciphertext) {
     decipher.setAuthTag(tag);
     return decipher.update(data) + decipher.final("utf8");
   } catch(e) {
-    // Si falla el descifrado, podría ser que la key no estaba cifrada (migración)
+    if (e.message.includes("ENCRYPTION_KEY")) throw e;
     return ciphertext;
   }
 }
 
-// Verificar si un string parece estar cifrado (es base64 válido de >32 bytes)
 function isEncrypted(text) {
   if (!text || text.length < 44) return false;
   try { return Buffer.from(text, "base64").length >= 32; } catch { return false; }
 }
 
-module.exports = { encrypt, decrypt, isEncrypted };
+module.exports = { encrypt, decrypt, isEncrypted, getEncryptionKey };
