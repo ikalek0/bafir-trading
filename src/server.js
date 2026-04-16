@@ -14,10 +14,48 @@ const { decrypt } = require("./encryption");
 const { TelegramAlerts, WeeklyReporter, calcClientROI, calcSimpleROI } = require("./bafir_features_patch");
 const { DepositDetector } = require("./depositDetector");
 
+const secrets = require("./secrets");
+
 const PORT           = process.env.PORT    || 3001;
-const BOT_SECRET     = process.env.BOT_SECRET     || "bafir_bot_secret";
+// BATCH-2 FIX #3 (#B1): eliminado fallback "bafir_bot_secret". Boot guard abajo valida.
+const BOT_SECRET     = process.env.BOT_SECRET || "";
 const ALLOWED_ORIGINS= (process.env.ALLOWED_ORIGINS||"").split(",").filter(Boolean);
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY; // opcional, mejora el cifrado
+
+// BATCH-2 FIX #1 (#B3): ENCRYPTION_KEY ya no es opcional — encryption.js lanza si no está.
+// BATCH-2 FIX #2 (#B2): boot guard valida todos los secrets antes de arrancar.
+(function validateBootSecrets() {
+  const checks = [
+    { name: "BOT_SECRET",      value: process.env.BOT_SECRET },
+    { name: "SYNC_SECRET",     value: process.env.SYNC_SECRET },
+    { name: "ENCRYPTION_KEY",  value: process.env.ENCRYPTION_KEY },
+  ];
+  const bad = [];
+  for (const c of checks) {
+    const v = secrets.validateBootSecret(c.value);
+    if (!v.ok) bad.push(`${c.name} [${v.reason}]`);
+  }
+  if (bad.length) {
+    console.error("!".repeat(70));
+    console.error(`[BOOT] ❌ Secrets inválidos: ${bad.join(", ")}`);
+    console.error(`[BOOT] ❌ Requisitos: no-empty, no en lista predictable, ≥16 chars`);
+    console.error("[BOOT] ❌ ENCRYPTION_KEY ≥32 chars. Generate: openssl rand -hex 32");
+    console.error("!".repeat(70));
+    process.exit(1);
+  }
+  // Verify encryption actually works with the key
+  try {
+    const { encrypt, decrypt } = require("./encryption");
+    const test = encrypt("boot-check");
+    if (decrypt(test) !== "boot-check") throw new Error("round-trip failed");
+    console.log("[BOOT] ✓ Secrets validados + encryption OK");
+  } catch(e) {
+    console.error(`[BOOT] ❌ Encryption test failed: ${e.message}`);
+    process.exit(1);
+  }
+})();
+
+// BATCH-2 FIX #3: timing-safe checker for BOT_SECRET (pattern from cryptobot-live)
+const checkBotSecret = secrets.makeBotSecretChecker(() => process.env.BOT_SECRET);
 
 const app = express();
 const db  = new BafirDB();
@@ -320,16 +358,27 @@ app.post("/api/admin/alert-config", apiRL, requireAdmin,
     const save = require("./data"); // already loaded
     db.saveAlertConfig && db.saveAlertConfig(cfg);
     // Push config to both bots
-    const BOT_SECRET = process.env.BOT_SECRET||"bafir_bot_secret";
+    // BATCH-2 FIX #3: usar BOT_SECRET validado del boot (sin fallback)
     const body = JSON.stringify({secret:BOT_SECRET, alertConfig:cfg});
     for(const url of [process.env.PAPER_BOT_URL, process.env.LIVE_BOT_URL||""].filter(Boolean)) {
       try {
         const mod2 = url.startsWith("https")?require("https"):require("http");
         const u = new URL("/api/set-alert-config", url);
         const r2 = mod2.request({hostname:u.hostname,path:u.pathname,method:"POST",
-          headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(body)}},()=>{});
-        r2.on("error",()=>{}); r2.write(body); r2.end();
-      } catch(e) {}
+          headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(body)}}, resp => {
+          let d=""; resp.on("data",c=>d+=c);
+          resp.on("end",()=>{
+            // BATCH-2 FIX #5: log response instead of ignoring
+            if (resp.statusCode >= 200 && resp.statusCode < 300) {
+              console.log(`[BAFIR] alert-config → ${url}: OK`);
+            } else {
+              console.warn(`[BAFIR] alert-config → ${url}: HTTP ${resp.statusCode} ${d.slice(0,100)}`);
+            }
+          });
+        });
+        r2.on("error",e=>console.warn(`[BAFIR] alert-config → ${url}: ${e.message}`));
+        r2.write(body); r2.end();
+      } catch(e) { console.warn(`[BAFIR] alert-config error: ${e.message}`); }
     }
     res.json({ok:true, cfg});
   }
@@ -361,27 +410,57 @@ app.post("/api/admin/manager-capital", apiRL, requireAdmin,
         if (liveState && liveState.instance==="LIVE") {
           const realBalance = liveState.cash + Object.values(liveState.portfolio||{})
             .reduce((s,p)=>s+(p.qty*(liveState.prices?.[p.symbol]||p.entryPrice)),0);
-          if (realBalance < amountUSD * 0.90) { // 10% tolerancia
+          // BATCH-2 FIX #4 (#B4): tolerancia reducida de 10% a 2%
+          const TOLERANCE = 0.02;
+          if (realBalance < amountUSD * (1 - TOLERANCE)) {
             return res.status(400).json({
-              error: `Balance insuficiente en Binance. Tienes ~$${realBalance.toFixed(2)} pero declaras $${amountUSD.toFixed(2)}. Añade más USDC a Binance primero.`,
+              error: `Balance insuficiente. Tienes ~$${realBalance.toFixed(2)} pero declaras $${amountUSD.toFixed(2)} (tolerancia ${(TOLERANCE*100).toFixed(0)}%)`,
               realBalance: +realBalance.toFixed(2),
               required: +amountUSD.toFixed(2)
             });
           }
         }
-        // En modo PAPER-LIVE: guardar sin verificar balance real (aún no hay API key)
+        // BATCH-2 FIX #4: sanity cap
+        if (amountUSD > 1_000_000) {
+          return res.status(400).json({error: "Capital sanity check: > $1M rechazado"});
+        }
 
         // Enviar capital operativo al live bot
-        const BOT_SECRET = process.env.BOT_SECRET||"bafir_bot_secret";
-        const body = JSON.stringify({secret:BOT_SECRET, capitalUSD:amountUSD});
-        const url = new URL("/api/set-capital", LIVE_URL);
-        const mod2 = url.protocol==="https:" ? https : require("http");
-        const req2 = mod2.request({
-          hostname:url.hostname, path:url.pathname, method:"POST",
-          headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(body)}
-        }, r2 => { let d=""; r2.on("data",c=>d+=c); r2.on("end",()=>{ try{const r=JSON.parse(d); console.log(`[BAFIR] Capital enviado al live: $${amountUSD.toFixed(2)} → ${r.ok?"✅":"❌"}`); }catch{} }); });
-        req2.on("error",e=>console.warn("[BAFIR] set-capital error:",e.message));
-        req2.write(body); req2.end();
+        // BATCH-2 FIX #3+#5: usar BOT_SECRET validado + validar respuesta del live
+        const setCapBody = JSON.stringify({secret:BOT_SECRET, capitalUSD:amountUSD});
+        const setCapUrl = new URL("/api/set-capital", LIVE_URL);
+        const setCapMod = setCapUrl.protocol==="https:" ? https : require("http");
+        try {
+          const liveResponse = await new Promise((resolve, reject) => {
+            const req2 = setCapMod.request({
+              hostname:setCapUrl.hostname, path:setCapUrl.pathname, method:"POST",
+              headers:{"Content-Type":"application/json","Content-Length":Buffer.byteLength(setCapBody)}
+            }, r2 => {
+              let d=""; r2.on("data",c=>d+=c);
+              r2.on("end",()=>{
+                try {
+                  const parsed = JSON.parse(d);
+                  if (r2.statusCode >= 200 && r2.statusCode < 300 && parsed.ok) {
+                    resolve(parsed);
+                  } else {
+                    reject(new Error(`HTTP ${r2.statusCode}: ${d.slice(0,200)}`));
+                  }
+                } catch(e) { reject(new Error(`Parse error: ${d.slice(0,100)}`)); }
+              });
+            });
+            req2.on("error", reject);
+            req2.setTimeout(8000, () => { req2.destroy(); reject(new Error("Timeout")); });
+            req2.write(setCapBody); req2.end();
+          });
+          console.log(`[BAFIR] Capital enviado al live: $${amountUSD.toFixed(2)} → ✅`);
+        } catch(e) {
+          console.error("[BAFIR] Error sincronizando capital con live:", e.message);
+          if (telegramAlerts && process.env.TELEGRAM_CHAT_ID) {
+            telegramAlerts.sendMessage(process.env.TELEGRAM_CHAT_ID,
+              `⚠️ <b>BAFIR sync falló</b>\nset-capital → live\nError: ${e.message}\nCambio NO aplicado.`);
+          }
+          return res.status(502).json({ error: "Live bot sync failed", detail: e.message });
+        }
       } catch(e) { console.warn("[BAFIR] Error verificando live bot:", e.message); }
     }
 
@@ -453,8 +532,9 @@ app.get("/api/bots/state", apiRL, requireAdmin, async (_,res) => {
 });
 
 // ── BOT EQUITY ────────────────────────────────────────────────────────────────
-app.post("/api/bot/equity",       botRL, (req,res)=>{ if(req.body.secret!==BOT_SECRET) return res.status(401).json({error:"No autorizado"}); if(isNaN(+req.body.value)) return res.status(400).json({error:"Inválido"}); db.pushEquityPoint(+req.body.value,"live"); if(Math.random()<0.08)db.saveEquity(); res.json({ok:true}); });
-app.post("/api/bot/equity/paper", botRL, (req,res)=>{ if(req.body.secret!==BOT_SECRET) return res.status(401).json({error:"No autorizado"}); if(isNaN(+req.body.value)) return res.status(400).json({error:"Inválido"}); db.pushEquityPoint(+req.body.value,"paper"); if(Math.random()<0.08)db.saveEquity(); res.json({ok:true}); });
+// BATCH-2 FIX #3: timing-safe checkBotSecret instead of !==
+app.post("/api/bot/equity",       botRL, (req,res)=>{ if(!checkBotSecret(req.body.secret)) return res.status(401).json({error:"No autorizado"}); if(isNaN(+req.body.value)) return res.status(400).json({error:"Inválido"}); db.pushEquityPoint(+req.body.value,"live"); if(Math.random()<0.08)db.saveEquity(); res.json({ok:true}); });
+app.post("/api/bot/equity/paper", botRL, (req,res)=>{ if(!checkBotSecret(req.body.secret)) return res.status(401).json({error:"No autorizado"}); if(isNaN(+req.body.value)) return res.status(400).json({error:"Inválido"}); db.pushEquityPoint(+req.body.value,"paper"); if(Math.random()<0.08)db.saveEquity(); res.json({ok:true}); });
 app.get("/api/bot/status", apiRL, requireAdmin, (_,res)=>{ const eq=db.db.botEquity||[]; res.json({paper:eq.filter(e=>e.source==="paper").slice(-200),live:eq.filter(e=>e.source==="live").slice(-200),fxRate:db.fxRate}); });
 
 // ── CLIENT API ────────────────────────────────────────────────────────────────
@@ -762,12 +842,17 @@ app.post("/api/client/connect-binance", apiRL, requireClient, async (req, res) =
 });
 
 // ── Internal API: copy-trading ─────────────────────────────────────────────
+// BATCH-2 FIX #2 (#B2): eliminado fallback "bafir_sync_secret_2024".
+// SYNC_SECRET ya validado en boot guard. Si está vacío, boot abortó.
 const internalAuth = (req, res, next) => {
+  const SYNC_SECRET = process.env.SYNC_SECRET;
+  if (!SYNC_SECRET) return res.status(503).json({error:"Service misconfigured"});
   const sig = req.headers["x-signature"];
+  if (!sig) return res.status(401).json({error:"Unauthorized"});
   const body = JSON.stringify(req.body);
-  const expected = require("crypto").createHmac("sha256", process.env.SYNC_SECRET||"bafir_sync_secret_2024").update(body).digest("hex");
+  const expected = crypto.createHmac("sha256", SYNC_SECRET).update(body).digest("hex");
   try {
-    if(!sig || !require("crypto").timingSafeEqual(Buffer.from(sig,"hex"), Buffer.from(expected,"hex")))
+    if (!crypto.timingSafeEqual(Buffer.from(sig,"hex"), Buffer.from(expected,"hex")))
       return res.status(401).json({error:"Unauthorized"});
   } catch(e) { return res.status(401).json({error:"Unauthorized"}); }
   next();
