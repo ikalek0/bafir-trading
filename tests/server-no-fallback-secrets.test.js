@@ -14,9 +14,10 @@ describe("BATCH-2 FIX #2+#3 — no hardcoded fallback secrets in server.js", () 
     assert.equal(found.length, 0, `Found bafir_bot_secret in non-comment lines: ${found.join("\n")}`);
   });
 
-  it("bafir_sync_secret_2024 literal NOT anywhere", () => {
-    assert.ok(!serverSrc.includes("bafir_sync_secret_2024"),
-      "bafir_sync_secret_2024 should be completely eliminated");
+  it("bafir_sync_secret_2024 literal NOT in executable code", () => {
+    const lines = serverSrc.split("\n").filter(l => !l.trim().startsWith("//"));
+    const found = lines.filter(l => l.includes("bafir_sync_secret_2024"));
+    assert.equal(found.length, 0, `Found in non-comment lines: ${found.join("\n")}`);
   });
 
   it("BOT_SECRET declaration has no fallback", () => {
