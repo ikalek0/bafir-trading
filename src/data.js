@@ -35,7 +35,29 @@ function load() {
     fs.mkdirSync(path.dirname(DATA_FILE),{recursive:true});
     if (fs.existsSync(DATA_FILE)) return JSON.parse(fs.readFileSync(DATA_FILE,"utf8"));
   } catch(e) { console.warn("[DATA]",e.message); }
-  return { clients:{}, botEquity:[], adminHash:hashPw("bafir2024"), fxRate:1.08,
+  return { clients:{}, botEquity:[],
+           // BATCH-2 FIX #6 (#B6): no default password "bafir2024".
+           // Si INITIAL_ADMIN_PASSWORD está en env → usar esa.
+           // Si no → generar aleatoria y logearla UNA VEZ para que el admin la guarde.
+           adminHash: (() => {
+             const envPw = process.env.INITIAL_ADMIN_PASSWORD;
+             if (envPw && envPw.length >= 12 && envPw !== "bafir2024") {
+               console.log("[DATA] Admin password seteada desde INITIAL_ADMIN_PASSWORD");
+               return hashPw(envPw);
+             }
+             if (envPw === "bafir2024") {
+               console.warn("[DATA] ⚠️ INITIAL_ADMIN_PASSWORD=bafir2024 es predecible — generando aleatoria");
+             }
+             const generated = crypto.randomBytes(16).toString("hex");
+             console.warn("=".repeat(70));
+             console.warn("[DATA] ⚠️ INITIAL_ADMIN_PASSWORD no configurada o inválida (min 12 chars)");
+             console.warn(`[DATA] Password admin generada: ${generated}`);
+             console.warn("[DATA] ⚠️ GUARDA ESTE VALOR — no se mostrará de nuevo");
+             console.warn("[DATA] Para cambiar: usa /api/admin/password tras login");
+             console.warn("=".repeat(70));
+             return hashPw(generated);
+           })(),
+           fxRate:1.08,
            twoFA:{ enabled:false, secret:"", backupCodes:[] },
            ipWhitelist:[], managerCapital:{ amount:0, currency:"EUR", note:"" } };
 }
